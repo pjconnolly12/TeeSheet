@@ -1,0 +1,22 @@
+import type { Database } from "./database";
+
+export type RoundRow = Database["public"]["Tables"]["rounds"]["Row"];
+export type RoundPlayerRow = Database["public"]["Tables"]["round_players"]["Row"];
+export type DistributionListEntryRow =
+  Database["public"]["Tables"]["distribution_list_entries"]["Row"];
+export type RoundWaitlistEntryRow =
+  Database["public"]["Tables"]["round_waitlist_entries"]["Row"];
+
+export interface PlayerInput {
+  email: string;
+}
+
+export interface DistributionListEntryInput {
+  name: string;
+  email: string;
+}
+
+export interface RoundWithPlayers extends RoundRow {
+  round_players: RoundPlayerRow[];
+  round_waitlist_entries: RoundWaitlistEntryRow[];
+}

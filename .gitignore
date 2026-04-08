@@ -1,0 +1,16 @@
+# Local environment files
+.env
+.env.*
+!.env.example
+
+# Dependencies
+node_modules/
+
+# Local Netlify folder
+.netlify
+
+# Build output
+dist
+
+# TypeScript build info
+*.tsbuildinfo
