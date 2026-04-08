@@ -45,7 +45,7 @@ export function AuthCard({ onAuthSuccess }: AuthCardProps) {
   return (
     <section className="auth-card">
       <div>
-        <p className="eyebrow">TeeSheet</p>
+        <p className="eyebrow">TeeLogic</p>
         <h1>Track every round before the first tee shot.</h1>
         <p className="muted">
           Sign in to create and manage your golf rounds, and share them with your friends.

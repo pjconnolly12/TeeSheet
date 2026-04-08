@@ -1,6 +1,6 @@
-# TeeSheet
+# TeeLogic
 
-TeeSheet is a lightweight golf round scheduler built with React, TypeScript, Supabase, and Netlify Functions.
+TeeLogic is a lightweight golf round scheduler built with React, TypeScript, Supabase, and Netlify Functions.
 
 ## Features
 
@@ -53,7 +53,7 @@ If you already created the earlier version of the schema, run this updated file 
    ```bash
    git init -b main
    git add .
-   git commit -m "Prepare TeeSheet for Netlify deploy"
+   git commit -m "Prepare TeeLogic for Netlify deploy"
    ```
 2. Create a GitHub repository.
 3. Add it as a remote and push:
@@ -91,7 +91,7 @@ Use these values:
 - `SUPABASE_URL`: the same value as `VITE_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`: your rotated service-role key
 - `RESEND_API_KEY`: your active Resend API key
-- `EMAIL_FROM`: a verified sender, for example `TeeSheet <golf@yourdomain.com>`
+- `EMAIL_FROM`: a verified sender, for example `TeeLogic <golf@yourdomain.com>`
 
 ### 6. Configure Supabase Auth
 
@@ -147,4 +147,4 @@ Owners can manage a reusable distribution list in the app, and those recipients 
 
 Users can only view rounds they created or rounds where their email is listed as a player.
 When a round is full, logged-in users can add themselves to that round's waitlist.
-If the round owner later removes a golfer or reduces the active lineup below capacity, TeeSheet automatically promotes the earliest active waitlist entry into the round.
+If the round owner later removes a golfer or reduces the active lineup below capacity, TeeLogic automatically promotes the earliest active waitlist entry into the round.

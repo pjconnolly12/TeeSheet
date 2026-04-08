@@ -127,7 +127,7 @@ export function RoundForm({
       <div className="panel-heading">
         <div>
           <p className="eyebrow">{initialRound ? "Update Round" : "New Round"}</p>
-          <h2>{initialRound ? "Edit the Tee Sheet" : "Create a Golf Round"}</h2>
+          <h2>{initialRound ? "Edit the TeeLogic" : "Create a Golf Round"}</h2>
         </div>
         {initialRound ? (
           <button className="ghost-button" type="button" onClick={onCancelEdit}>

@@ -125,7 +125,7 @@ export function RoundList({
 
                 {!isOwner && isFull && !hasWaitlistSpot && !isAlreadyPlaying ? (
                   <div className="stack-sm waitlist-block">
-                    <p className="muted">Round is full. Join the waitlist and TeeSheet will promote you automatically if a spot opens.</p>
+                    <p className="muted">Round is full. Join the waitlist and TeeLogic will promote you automatically if a spot opens.</p>
                     <div className="player-row">
                       <input
                         type="text"

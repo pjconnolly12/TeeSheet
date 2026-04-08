@@ -33,7 +33,7 @@ export function buildRoundEmail({
   return `
     <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#f6f8f3;">
       <div style="background:#ffffff;border-radius:18px;padding:24px;border:1px solid #dde5da;">
-        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1f7a4f;margin:0 0 12px;">TeeSheet</p>
+        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1f7a4f;margin:0 0 12px;">TeeLogic</p>
         <h1 style="margin:0 0 12px;color:#183122;">${heading}</h1>
         <p style="margin:0 0 20px;color:#496454;">${intro}</p>
         <div style="background:#eef6e4;border-radius:16px;padding:16px;">

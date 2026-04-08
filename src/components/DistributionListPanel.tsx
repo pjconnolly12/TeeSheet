@@ -137,7 +137,7 @@ export function DistributionListPanel({
 
         <div className="stack-sm">
           <p className="muted">
-            When you create a round, TeeSheet emails everyone on this list in addition to the golfers assigned to the round.
+            When you create a round, TeeLogic emails everyone on this list in addition to the golfers assigned to the round.
           </p>
 
           <div className="distribution-list-summary">

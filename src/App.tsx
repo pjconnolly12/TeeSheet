@@ -425,7 +425,7 @@ export default function App() {
   }
 
   if (loading && !session) {
-    return <main className="app-shell loading-shell">Loading TeeSheet...</main>;
+    return <main className="app-shell loading-shell">Loading TeeLogic...</main>;
   }
 
   if (!session) {
@@ -451,7 +451,7 @@ export default function App() {
     <main className="app-shell">
       <header className="hero">
         <div>
-          <p className="eyebrow">TeeSheet</p>
+          <p className="eyebrow">TeeLogic</p>
           <h1>Keep the crew aligned from booking to tee time.</h1>
           <p className="muted">
             Create and manage your golf rounds
