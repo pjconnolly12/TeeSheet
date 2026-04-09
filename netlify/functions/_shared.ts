@@ -14,6 +14,7 @@ if (!resendApiKey || !emailFrom || !supabaseUrl || !supabaseServiceRoleKey) {
 export const resend = new Resend(resendApiKey);
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export const sender = emailFrom;
+export const siteUrl = "https://teelogic.xyz/";
 
 export function buildRoundEmail({
   heading,
@@ -43,6 +44,10 @@ export function buildRoundEmail({
           <p style="margin:0 0 8px;"><strong>Holes:</strong> ${holes}</p>
           <p style="margin:0;"><strong>Group size:</strong> ${maxPlayers}</p>
         </div>
+        <p style="margin:20px 0 0;color:#496454;">
+          Manage your rounds at
+          <a href="${siteUrl}" style="color:#1f7a4f;font-weight:700;text-decoration:none;"> TeeLogic</a>.
+        </p>
       </div>
     </div>
   `;

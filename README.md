@@ -5,6 +5,7 @@ TeeLogic is a lightweight golf round scheduler built with React, TypeScript, Sup
 ## Features
 
 - Sign up and log in
+- Request a password reset and choose a new password from the email recovery link
 - Add and update golf rounds
 - Treat the user who creates a round as that round's owner
 - Store date, time, location, holes, number of players, and golfer list
@@ -126,13 +127,14 @@ In Supabase Auth settings:
 Run through this checklist on the deployed site:
 
 1. Sign up and sign in successfully.
-2. Create a round and confirm the owner can see it.
-3. Invite another player email and confirm that invited user can see it.
-4. Confirm a non-invited account cannot see the round.
-5. Confirm only the owner can edit or delete the round.
-6. Fill a round, join the waitlist, and verify waitlist promotion when a spot opens.
-7. Confirm creation and update emails send successfully.
-8. Trigger or wait for `send-round-reminders` and confirm reminders mark `reminder_sent_at`.
+2. Request a password reset and confirm the recovery link opens the reset form.
+3. Create a round and confirm the owner can see it.
+4. Invite another player email and confirm that invited user can see it.
+5. Confirm a non-invited account cannot see the round.
+6. Confirm only the owner can edit or delete the round.
+7. Fill a round, join the waitlist, and verify waitlist promotion when a spot opens.
+8. Confirm creation and update emails send successfully.
+9. Trigger or wait for `send-round-reminders` and confirm reminders mark `reminder_sent_at`.
 
 ## Reminder emails
 

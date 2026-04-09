@@ -184,6 +184,16 @@ select {
   padding-left: 0;
 }
 
+.auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.auth-reset-note {
+  margin: 0;
+}
+
 .primary-button:hover,
 .ghost-button:hover,
 .icon-button:hover {

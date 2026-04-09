@@ -23,6 +23,7 @@ interface SaveRoundPayload {
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
   const [rounds, setRounds] = useState<RoundWithPlayers[]>([]);
   const [editingRound, setEditingRound] = useState<RoundWithPlayers | null>(null);
   const [distributionList, setDistributionList] = useState<DistributionListEntryRow[]>([]);
@@ -46,6 +47,10 @@ export default function App() {
     let cancelled = false;
 
     async function bootstrap() {
+      if (window.location.hash.includes("type=recovery")) {
+        setIsRecoveringPassword(true);
+      }
+
       const {
         data: { session: nextSession }
       } = await supabase.auth.getSession();
@@ -67,7 +72,15 @@ export default function App() {
 
     const {
       data: { subscription }
-    } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+    } = supabase.auth.onAuthStateChange((event, nextSession) => {
+      if (event === "PASSWORD_RECOVERY") {
+        setIsRecoveringPassword(true);
+      }
+
+      if (event === "SIGNED_OUT") {
+        setIsRecoveringPassword(false);
+      }
+
       setSession(nextSession);
       if (nextSession) {
         void loadRounds(nextSession);
@@ -424,14 +437,15 @@ export default function App() {
     setLoading(false);
   }
 
-  if (loading && !session) {
+  if (loading && !session && !isRecoveringPassword) {
     return <main className="app-shell loading-shell">Loading TeeLogic...</main>;
   }
 
-  if (!session) {
+  if (!session || isRecoveringPassword) {
     return (
       <main className="app-shell auth-shell">
         <AuthCard
+          recoveryMode={isRecoveringPassword}
           onAuthSuccess={async () => {
             const {
               data: { session: nextSession }
@@ -441,6 +455,10 @@ export default function App() {
             if (nextSession) {
               await Promise.all([loadRounds(nextSession), loadDistributionList(nextSession.user.id)]);
             }
+          }}
+          onPasswordResetComplete={() => {
+            setIsRecoveringPassword(false);
+            window.history.replaceState({}, document.title, window.location.pathname);
           }}
         />
       </main>
