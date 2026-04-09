@@ -6,8 +6,10 @@ interface RoundListProps {
   rounds: RoundWithPlayers[];
   currentUserId: string;
   currentUserEmail: string;
+  saving: boolean;
   onEdit: (round: RoundWithPlayers) => void;
   onDelete: (round: RoundWithPlayers) => Promise<void>;
+  onJoinRound: (roundId: string) => Promise<void>;
   onJoinWaitlist: (roundId: string, entry: { name: string; email: string }) => Promise<void>;
 }
 
@@ -15,8 +17,10 @@ export function RoundList({
   rounds,
   currentUserId,
   currentUserEmail,
+  saving,
   onEdit,
   onDelete,
+  onJoinRound,
   onJoinWaitlist
 }: RoundListProps) {
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
@@ -64,6 +68,9 @@ export function RoundList({
             const isAlreadyPlaying = round.round_players.some(
               (player) => player.email.toLowerCase() === currentUserEmail.toLowerCase()
             );
+            const isInvited = round.round_invitations.some(
+              (invite) => invite.email.toLowerCase() === currentUserEmail.toLowerCase()
+            );
 
             return (
               <article className="round-card" key={round.id}>
@@ -108,6 +115,20 @@ export function RoundList({
                     </li>
                   ))}
                 </ul>
+
+                {!isOwner && isInvited && !isAlreadyPlaying && !isFull ? (
+                  <div className="stack-sm">
+                    <p className="muted">You were invited to this round and there is still an open spot.</p>
+                    <button
+                      className="primary-button"
+                      type="button"
+                      onClick={() => void onJoinRound(round.id)}
+                      disabled={saving}
+                    >
+                      {saving ? "Joining..." : "Join round"}
+                    </button>
+                  </div>
+                ) : null}
 
                 {activeWaitlist.length > 0 ? (
                   <div className="stack-sm waitlist-block">

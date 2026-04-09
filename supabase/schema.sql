@@ -30,6 +30,13 @@ create table if not exists public.distribution_list_entries (
   created_at timestamptz not null default timezone('utc', now())
 );
 
+create table if not exists public.round_invitations (
+  id uuid primary key default gen_random_uuid(),
+  round_id uuid not null references public.rounds(id) on delete cascade,
+  email text not null,
+  created_at timestamptz not null default timezone('utc', now())
+);
+
 create table if not exists public.round_waitlist_entries (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references public.rounds(id) on delete cascade,
@@ -46,6 +53,9 @@ create unique index if not exists round_players_round_id_email_idx
 create unique index if not exists distribution_list_entries_owner_id_email_idx
   on public.distribution_list_entries (owner_id, lower(email));
 
+create unique index if not exists round_invitations_round_id_email_idx
+  on public.round_invitations (round_id, lower(email));
+
 create unique index if not exists round_waitlist_entries_active_email_idx
   on public.round_waitlist_entries (round_id, lower(email))
   where promoted_at is null;
@@ -56,16 +66,19 @@ grant usage on schema public to service_role;
 grant select, insert, update, delete on public.rounds to authenticated;
 grant select, insert, update, delete on public.round_players to authenticated;
 grant select, insert, update, delete on public.distribution_list_entries to authenticated;
+grant select, insert, update, delete on public.round_invitations to authenticated;
 grant select, insert, update, delete on public.round_waitlist_entries to authenticated;
 
 grant select, insert, update, delete on public.rounds to service_role;
 grant select, insert, update, delete on public.round_players to service_role;
 grant select, insert, update, delete on public.distribution_list_entries to service_role;
+grant select, insert, update, delete on public.round_invitations to service_role;
 grant select, insert, update, delete on public.round_waitlist_entries to service_role;
 
 alter table public.rounds enable row level security;
 alter table public.round_players enable row level security;
 alter table public.distribution_list_entries enable row level security;
+alter table public.round_invitations enable row level security;
 alter table public.round_waitlist_entries enable row level security;
 
 create or replace function public.enforce_round_capacity()
@@ -151,6 +164,12 @@ as $$
           where round_players.round_id = rounds.id
             and lower(round_players.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
         )
+        or exists (
+          select 1
+          from public.round_invitations
+          where round_invitations.round_id = rounds.id
+            and lower(round_invitations.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+        )
       )
   );
 $$;
@@ -184,6 +203,12 @@ using (
     from public.round_players
     where round_players.round_id = rounds.id
       and lower(round_players.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  )
+  or exists (
+    select 1
+    from public.round_invitations
+    where round_invitations.round_id = rounds.id
+      and lower(round_invitations.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   )
 );
 
@@ -221,6 +246,10 @@ with check (
     select 1 from public.rounds
     where rounds.id = round_players.round_id
       and rounds.created_by = auth.uid()
+  )
+  or (
+    lower(round_players.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+    and public.user_can_view_round(round_players.round_id)
   )
 );
 
@@ -270,6 +299,37 @@ create policy "Owners can delete their distribution list"
 on public.distribution_list_entries
 for delete
 using (auth.uid() = owner_id);
+
+drop policy if exists "Users can view invitations on visible rounds" on public.round_invitations;
+drop policy if exists "Round owners can create invitations" on public.round_invitations;
+drop policy if exists "Round owners can delete invitations" on public.round_invitations;
+
+create policy "Users can view invitations on visible rounds"
+on public.round_invitations
+for select
+using (public.user_can_view_round(round_id));
+
+create policy "Round owners can create invitations"
+on public.round_invitations
+for insert
+with check (
+  exists (
+    select 1 from public.rounds
+    where rounds.id = round_invitations.round_id
+      and rounds.created_by = auth.uid()
+  )
+);
+
+create policy "Round owners can delete invitations"
+on public.round_invitations
+for delete
+using (
+  exists (
+    select 1 from public.rounds
+    where rounds.id = round_invitations.round_id
+      and rounds.created_by = auth.uid()
+  )
+);
 
 drop policy if exists "Authenticated users can view round waitlists" on public.round_waitlist_entries;
 drop policy if exists "Users can view waitlists on visible rounds" on public.round_waitlist_entries;

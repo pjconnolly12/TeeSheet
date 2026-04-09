@@ -89,6 +89,34 @@ export interface Database {
         };
         Relationships: [];
       };
+      round_invitations: {
+        Row: {
+          created_at: string;
+          email: string;
+          id: string;
+          round_id: string;
+        };
+        Insert: {
+          created_at?: string;
+          email: string;
+          id?: string;
+          round_id: string;
+        };
+        Update: {
+          created_at?: string;
+          email?: string;
+          id?: string;
+          round_id?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "round_invitations_round_id_fkey";
+            columns: ["round_id"];
+            referencedRelation: "rounds";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
       round_waitlist_entries: {
         Row: {
           created_at: string;

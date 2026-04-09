@@ -119,16 +119,25 @@ export default function App() {
 
     const [
       { data: ownedRounds, error: ownedRoundsError },
-      { data: invitedRounds, error: invitedRoundsError }
+      { data: invitedRounds, error: invitedRoundsError },
+      { data: invitedByEmailRounds, error: invitedByEmailRoundsError }
     ] = await Promise.all([
       supabase.from("rounds").select("id").eq("created_by", activeSession.user.id),
       currentUserEmail
         ? supabase.from("round_players").select("round_id").eq("email", currentUserEmail)
+        : Promise.resolve({ data: [], error: null }),
+      currentUserEmail
+        ? supabase.from("round_invitations").select("round_id").eq("email", currentUserEmail)
         : Promise.resolve({ data: [], error: null })
     ]);
 
-    if (ownedRoundsError || invitedRoundsError) {
-      setError(ownedRoundsError?.message ?? invitedRoundsError?.message ?? "Unable to load rounds.");
+    if (ownedRoundsError || invitedRoundsError || invitedByEmailRoundsError) {
+      setError(
+        ownedRoundsError?.message ??
+          invitedRoundsError?.message ??
+          invitedByEmailRoundsError?.message ??
+          "Unable to load rounds."
+      );
       setLoading(false);
       return;
     }
@@ -136,7 +145,8 @@ export default function App() {
     const visibleRoundIds = Array.from(
       new Set([
         ...(ownedRounds ?? []).map((round) => round.id),
-        ...(invitedRounds ?? []).map((player) => player.round_id)
+        ...(invitedRounds ?? []).map((player) => player.round_id),
+        ...(invitedByEmailRounds ?? []).map((invite) => invite.round_id)
       ])
     );
 
@@ -148,7 +158,7 @@ export default function App() {
 
     const { data, error: roundError } = await supabase
       .from("rounds")
-      .select("*, round_players(*), round_waitlist_entries(*)")
+      .select("*, round_players(*), round_invitations(*), round_waitlist_entries(*)")
       .in("id", visibleRoundIds)
       .order("tee_time", { ascending: true });
 
@@ -306,6 +316,30 @@ export default function App() {
         throw playersError;
       }
 
+      if (!editingRound) {
+        const playerEmails = new Set(finalPlayers.map((player) => player.email));
+        const invitationEmails = Array.from(
+          new Set(
+            distributionList
+              .map((entry) => entry.email.trim().toLowerCase())
+              .filter((email) => email && !playerEmails.has(email))
+          )
+        );
+
+        if (invitationEmails.length > 0) {
+          const { error: invitationsError } = await supabase.from("round_invitations").insert(
+            invitationEmails.map((email) => ({
+              round_id: roundId,
+              email
+            }))
+          );
+
+          if (invitationsError) {
+            throw invitationsError;
+          }
+        }
+      }
+
       await promoteWaitlist(roundId, payload.maxPlayers, finalPlayers.length);
 
       await notifyRound({
@@ -409,6 +443,37 @@ export default function App() {
     }
 
     await loadRounds();
+  }
+
+  async function handleJoinRound(roundId: string) {
+    if (!session) {
+      return;
+    }
+
+    const email = session.user.email?.trim().toLowerCase();
+    if (!email) {
+      setError("Your account is missing an email address.");
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+
+    const { error: joinError } = await supabase.from("round_players").insert({
+      round_id: roundId,
+      email
+    });
+
+    try {
+      if (joinError) {
+        setError(joinError.message);
+        return;
+      }
+
+      await loadRounds();
+    } finally {
+      setSaving(false);
+    }
   }
 
   async function handleDeleteRound(round: RoundWithPlayers) {
@@ -579,11 +644,13 @@ export default function App() {
           rounds={rounds}
           currentUserId={session.user.id}
           currentUserEmail={session.user.email ?? ""}
+          saving={saving}
           onEdit={(round) => {
             setEditingRound(round);
             setIsMobileRoundFormOpen(true);
           }}
           onDelete={handleDeleteRound}
+          onJoinRound={handleJoinRound}
           onJoinWaitlist={handleJoinWaitlist}
         />
       </section>

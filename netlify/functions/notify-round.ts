@@ -12,6 +12,7 @@ export const handler: Handler = async (event) => {
   try {
     const payload = JSON.parse(event.body ?? "{}") as {
       kind: "created" | "updated";
+      roundId: string;
       ownerId: string;
       location: string;
       teeTime: string;
@@ -85,11 +86,29 @@ export const handler: Handler = async (event) => {
         from: sender,
         to: recipient,
         subject,
-        html
+        html,
+        tags: [
+          { name: "category", value: "round_notification" },
+          { name: "kind", value: payload.kind },
+          { name: "round_id", value: payload.roundId.replace(/[^a-zA-Z0-9_-]/g, "-") }
+        ]
       });
 
       if (result.error) {
         failures.push(`${recipient}: ${result.error.message}`);
+        console.error("notify-round send failed", {
+          roundId: payload.roundId,
+          recipient,
+          kind: payload.kind,
+          error: result.error
+        });
+      } else {
+        console.log("notify-round send accepted", {
+          roundId: payload.roundId,
+          recipient,
+          kind: payload.kind,
+          resendEmailId: result.data?.id ?? null
+        });
       }
     }
 
