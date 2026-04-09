@@ -28,6 +28,8 @@ export default function App() {
   const [editingRound, setEditingRound] = useState<RoundWithPlayers | null>(null);
   const [distributionList, setDistributionList] = useState<DistributionListEntryRow[]>([]);
   const [isDistributionListOpen, setIsDistributionListOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileRoundFormOpen, setIsMobileRoundFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [savingDistributionList, setSavingDistributionList] = useState(false);
@@ -96,6 +98,12 @@ export default function App() {
       subscription.unsubscribe();
     };
   }, []);
+
+  useEffect(() => {
+    if (editingRound) {
+      setIsMobileRoundFormOpen(true);
+    }
+  }, [editingRound]);
 
   async function loadRounds(activeSession: Session | null = session) {
     if (!activeSession) {
@@ -327,6 +335,7 @@ export default function App() {
 
       await loadRounds();
       setEditingRound(null);
+      setIsMobileRoundFormOpen(false);
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Unable to save round.";
       setError(message);
@@ -437,6 +446,17 @@ export default function App() {
     setLoading(false);
   }
 
+  function handleOpenDistributionList() {
+    setIsDistributionListOpen(true);
+    setIsMobileMenuOpen(false);
+  }
+
+  function handleOpenRoundForm() {
+    setEditingRound(null);
+    setIsMobileRoundFormOpen(true);
+    setIsMobileMenuOpen(false);
+  }
+
   if (loading && !session && !isRecoveringPassword) {
     return <main className="app-shell loading-shell">Loading TeeLogic...</main>;
   }
@@ -476,16 +496,48 @@ export default function App() {
           </p>
         </div>
 
-        <button className="ghost-button" type="button" onClick={handleSignOut}>
-          Log out
-        </button>
+        <div className="hero-actions">
+          <button className="ghost-button desktop-only" type="button" onClick={handleSignOut}>
+            Log out
+          </button>
+          <button
+            className="ghost-button mobile-menu-button mobile-only"
+            type="button"
+            onClick={() => setIsMobileMenuOpen((current) => !current)}
+            aria-expanded={isMobileMenuOpen}
+            aria-label="Open menu"
+          >
+            Menu
+          </button>
+        </div>
       </header>
 
-      <div className="toolbar-row">
+      {isMobileMenuOpen ? (
+        <div className="mobile-menu mobile-only">
+          <button className="ghost-button" type="button" onClick={handleOpenRoundForm}>
+            Create round
+          </button>
+          <button className="ghost-button" type="button" onClick={handleOpenDistributionList}>
+            Manage distribution list
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              void handleSignOut();
+            }}
+          >
+            Log out
+          </button>
+        </div>
+      ) : null}
+
+      <div className="toolbar-row desktop-only">
         <button
           className="ghost-button"
           type="button"
-          onClick={() => setIsDistributionListOpen(true)}
+          onClick={handleOpenDistributionList}
         >
           Manage distribution list
         </button>
@@ -499,11 +551,25 @@ export default function App() {
       {error ? <p className="error-banner">{error}</p> : null}
 
       <section className="content-grid">
-        <div>
+        <div className={isMobileRoundFormOpen || editingRound ? "mobile-form-visible" : "mobile-form-hidden"}>
+          {isMobileRoundFormOpen && !editingRound ? (
+            <div className="mobile-form-actions mobile-only">
+              <button
+                className="text-button"
+                type="button"
+                onClick={() => setIsMobileRoundFormOpen(false)}
+              >
+                Hide create round
+              </button>
+            </div>
+          ) : null}
           <RoundForm
             initialRound={editingRound}
             creatorPlayer={buildCreatorPlayer() ?? { email: "" }}
-            onCancelEdit={() => setEditingRound(null)}
+            onCancelEdit={() => {
+              setEditingRound(null);
+              setIsMobileRoundFormOpen(false);
+            }}
             onSave={handleSaveRound}
             saving={saving}
           />
@@ -512,7 +578,10 @@ export default function App() {
           rounds={rounds}
           currentUserId={session.user.id}
           currentUserEmail={session.user.email ?? ""}
-          onEdit={setEditingRound}
+          onEdit={(round) => {
+            setEditingRound(round);
+            setIsMobileRoundFormOpen(true);
+          }}
           onDelete={handleDeleteRound}
           onJoinWaitlist={handleJoinWaitlist}
         />
