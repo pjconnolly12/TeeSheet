@@ -115,51 +115,9 @@ export default function App() {
     setLoading(true);
     setError(null);
 
-    const currentUserEmail = activeSession.user.email?.trim().toLowerCase();
-
-    const [
-      { data: ownedRounds, error: ownedRoundsError },
-      { data: invitedRounds, error: invitedRoundsError },
-      { data: invitedByEmailRounds, error: invitedByEmailRoundsError }
-    ] = await Promise.all([
-      supabase.from("rounds").select("id").eq("created_by", activeSession.user.id),
-      currentUserEmail
-        ? supabase.from("round_players").select("round_id").eq("email", currentUserEmail)
-        : Promise.resolve({ data: [], error: null }),
-      currentUserEmail
-        ? supabase.from("round_invitations").select("round_id").eq("email", currentUserEmail)
-        : Promise.resolve({ data: [], error: null })
-    ]);
-
-    if (ownedRoundsError || invitedRoundsError || invitedByEmailRoundsError) {
-      setError(
-        ownedRoundsError?.message ??
-          invitedRoundsError?.message ??
-          invitedByEmailRoundsError?.message ??
-          "Unable to load rounds."
-      );
-      setLoading(false);
-      return;
-    }
-
-    const visibleRoundIds = Array.from(
-      new Set([
-        ...(ownedRounds ?? []).map((round) => round.id),
-        ...(invitedRounds ?? []).map((player) => player.round_id),
-        ...(invitedByEmailRounds ?? []).map((invite) => invite.round_id)
-      ])
-    );
-
-    if (visibleRoundIds.length === 0) {
-      setRounds([]);
-      setLoading(false);
-      return;
-    }
-
     const { data, error: roundError } = await supabase
       .from("rounds")
       .select("*, round_players(*), round_invitations(*), round_waitlist_entries(*)")
-      .in("id", visibleRoundIds)
       .order("tee_time", { ascending: true });
 
     if (roundError) {

@@ -304,10 +304,17 @@ drop policy if exists "Users can view invitations on visible rounds" on public.r
 drop policy if exists "Round owners can create invitations" on public.round_invitations;
 drop policy if exists "Round owners can delete invitations" on public.round_invitations;
 
-create policy "Users can view invitations on visible rounds"
+create policy "Users can view their invitations"
 on public.round_invitations
 for select
-using (public.user_can_view_round(round_id));
+using (
+  lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+  or exists (
+    select 1 from public.rounds
+    where rounds.id = round_invitations.round_id
+      and rounds.created_by = auth.uid()
+  )
+);
 
 create policy "Round owners can create invitations"
 on public.round_invitations
