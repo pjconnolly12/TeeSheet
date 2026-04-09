@@ -165,7 +165,7 @@ export function RoundForm({
             type="text"
             value={location}
             onChange={(event) => setLocation(event.target.value)}
-            placeholder="Breakfast Hill"
+            placeholder="Add Course Name"
             required
           />
         </label>

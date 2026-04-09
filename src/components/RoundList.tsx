@@ -10,6 +10,7 @@ interface RoundListProps {
   onEdit: (round: RoundWithPlayers) => void;
   onDelete: (round: RoundWithPlayers) => Promise<void>;
   onJoinRound: (roundId: string) => Promise<void>;
+  onLeaveRound: (roundId: string) => Promise<void>;
   onJoinWaitlist: (roundId: string, entry: { name: string; email: string }) => Promise<void>;
 }
 
@@ -21,6 +22,7 @@ export function RoundList({
   onEdit,
   onDelete,
   onJoinRound,
+  onLeaveRound,
   onJoinWaitlist
 }: RoundListProps) {
   const [draftNames, setDraftNames] = useState<Record<string, string>>({});
@@ -126,6 +128,20 @@ export function RoundList({
                       disabled={saving}
                     >
                       {saving ? "Joining..." : "Join round"}
+                    </button>
+                  </div>
+                ) : null}
+
+                {!isOwner && isAlreadyPlaying ? (
+                  <div className="stack-sm">
+                    <p className="muted">You have joined this round.</p>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => void onLeaveRound(round.id)}
+                      disabled={saving}
+                    >
+                      {saving ? "Leaving..." : "Leave round"}
                     </button>
                   </div>
                 ) : null}

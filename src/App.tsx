@@ -434,6 +434,43 @@ export default function App() {
     }
   }
 
+  async function handleLeaveRound(roundId: string) {
+    if (!session) {
+      return;
+    }
+
+    const email = session.user.email?.trim().toLowerCase();
+    if (!email) {
+      setError("Your account is missing an email address.");
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+
+    try {
+      const response = await fetch("/.netlify/functions/leave-round", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ roundId, email })
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        throw new Error(message || "Unable to leave round.");
+      }
+
+      await loadRounds();
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : "Unable to leave round.";
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleDeleteRound(round: RoundWithPlayers) {
     if (!session) {
       return;
@@ -609,6 +646,7 @@ export default function App() {
           }}
           onDelete={handleDeleteRound}
           onJoinRound={handleJoinRound}
+          onLeaveRound={handleLeaveRound}
           onJoinWaitlist={handleJoinWaitlist}
         />
       </section>

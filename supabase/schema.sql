@@ -289,6 +289,7 @@ using (
     where rounds.id = round_players.round_id
       and rounds.created_by = auth.uid()
   )
+  or lower(round_players.email) = lower(coalesce(auth.jwt() ->> 'email', ''))
 );
 
 drop policy if exists "Owners can view their distribution list" on public.distribution_list_entries;
