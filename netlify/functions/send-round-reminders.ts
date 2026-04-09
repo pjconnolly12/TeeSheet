@@ -51,6 +51,7 @@ export const handler: Handler = async () => {
         html: buildRoundEmail({
           heading: "Golf Round Reminder",
           intro: "Your tee time is coming up soon. Grab your clubs and be ready to roll.",
+          actionText: "Open TeeLogic to review your round details and be ready for tee time.",
           location: round.location,
           teeTime: round.tee_time,
           holes: round.holes,

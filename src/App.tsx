@@ -311,6 +311,7 @@ export default function App() {
       await notifyRound({
         kind: editingRound ? "updated" : "created",
         roundId,
+        ownerId: session.user.id,
         location: payload.location,
         teeTime: payload.teeTime,
         holes: payload.holes,

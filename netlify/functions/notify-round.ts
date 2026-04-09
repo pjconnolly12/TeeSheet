@@ -1,5 +1,5 @@
 import type { Handler } from "@netlify/functions";
-import { buildRoundEmail, resend, sender } from "./_shared";
+import { buildRoundEmail, resend, sender, supabaseAdmin } from "./_shared";
 
 export const handler: Handler = async (event) => {
   if (event.httpMethod !== "POST") {
@@ -12,6 +12,7 @@ export const handler: Handler = async (event) => {
   try {
     const payload = JSON.parse(event.body ?? "{}") as {
       kind: "created" | "updated";
+      ownerId: string;
       location: string;
       teeTime: string;
       holes: number;
@@ -19,13 +20,35 @@ export const handler: Handler = async (event) => {
       players: Array<{ email: string; name: string }>;
       recipients: Array<{ email: string; name: string }>;
     };
+    type DistributionRecipientRow = { name: string | null; email: string };
 
-    if (!payload.recipients?.length) {
+    const distributionRecipients =
+      payload.kind === "created" && payload.ownerId
+        ? await (async () => {
+            const { data, error } = await supabaseAdmin
+              .from("distribution_list_entries")
+              .select("name, email")
+              .eq("owner_id", payload.ownerId);
+
+            if (error) {
+              throw new Error(`Could not load distribution list: ${error.message}`);
+            }
+
+            return ((data ?? []) as DistributionRecipientRow[]).map((entry) => ({
+              name: entry.name ?? entry.email,
+              email: entry.email
+            }));
+          })()
+        : [];
+
+    const allRecipients = [...(payload.recipients ?? []), ...distributionRecipients];
+
+    if (!allRecipients.length) {
       return { statusCode: 400, body: "Recipients are required." };
     }
 
     const uniqueRecipients = [...new Set(
-      payload.recipients
+      allRecipients
         .map((recipient) => recipient.email.trim().toLowerCase())
         .filter(Boolean)
     )];
@@ -40,11 +63,15 @@ export const handler: Handler = async (event) => {
         : `Updated golf round: ${payload.location}`;
 
     const html = buildRoundEmail({
-      heading: payload.kind === "created" ? "Your golf round is booked" : "Your golf round changed",
+      heading: payload.kind === "created" ? "A golf round was created" : "A golf round was updated",
       intro:
         payload.kind === "created"
-          ? "A new round was created by the round owner."
+          ? "A new round was created. Head to TeeLogic to join the round and see the latest details."
           : "Your round details were updated.",
+      actionText:
+        payload.kind === "created"
+          ? "Join the round at TeeLogic using the link below."
+          : "Review the updated round details at TeeLogic using the link below.",
       location: payload.location,
       teeTime: payload.teeTime,
       holes: payload.holes,

@@ -3,6 +3,7 @@ import type { DistributionListEntryInput, PlayerInput } from "../types/app";
 export interface NotifyRoundPayload {
   kind: "created" | "updated";
   roundId: string;
+  ownerId: string;
   location: string;
   teeTime: string;
   holes: number;

@@ -19,6 +19,7 @@ export const siteUrl = "https://teelogic.xyz/";
 export function buildRoundEmail({
   heading,
   intro,
+  actionText,
   location,
   teeTime,
   holes,
@@ -26,6 +27,7 @@ export function buildRoundEmail({
 }: {
   heading: string;
   intro: string;
+  actionText: string;
   location: string;
   teeTime: string;
   holes: number;
@@ -45,7 +47,13 @@ export function buildRoundEmail({
           <p style="margin:0;"><strong>Group size:</strong> ${maxPlayers}</p>
         </div>
         <p style="margin:20px 0 0;color:#496454;">
-          Manage your rounds at
+          ${actionText}
+        </p>
+        <p style="margin:16px 0 0;">
+          <a href="${siteUrl}" style="display:inline-block;background:#1f7a4f;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 18px;border-radius:999px;">Open TeeLogic</a>
+        </p>
+        <p style="margin:16px 0 0;color:#496454;">
+          You can also manage your rounds at
           <a href="${siteUrl}" style="color:#1f7a4f;font-weight:700;text-decoration:none;"> TeeLogic</a>.
         </p>
       </div>
