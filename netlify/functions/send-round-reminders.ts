@@ -1,6 +1,9 @@
 import type { Handler } from "@netlify/functions";
-import { addHours, differenceInHours } from "date-fns";
+import { addHours } from "date-fns";
 import { buildRoundEmail, resend, sender, supabaseAdmin } from "./_shared";
+
+const REMINDER_LEAD_HOURS = 36;
+const REMINDER_WINDOW_HOURS = 1;
 
 type RoundRecord = {
   id: string;
@@ -17,8 +20,9 @@ type RoundRecord = {
 
 export const handler: Handler = async () => {
   try {
-    const reminderWindowStart = new Date();
-    const reminderWindowEnd = addHours(reminderWindowStart, 30);
+    const now = new Date();
+    const reminderWindowStart = addHours(now, REMINDER_LEAD_HOURS - REMINDER_WINDOW_HOURS);
+    const reminderWindowEnd = addHours(now, REMINDER_LEAD_HOURS);
 
     const { data: rounds, error } = await supabaseAdmin
       .from("rounds")
@@ -30,10 +34,8 @@ export const handler: Handler = async () => {
       throw error;
     }
 
-    const pendingRounds = ((rounds ?? []) as RoundRecord[]).filter(
-      (round) =>
-        round.round_players.some((player) => !player.reminder_sent_at) &&
-        differenceInHours(new Date(round.tee_time), reminderWindowStart) <= 30
+    const pendingRounds = ((rounds ?? []) as RoundRecord[]).filter((round) =>
+      round.round_players.some((player) => !player.reminder_sent_at)
     );
 
     for (const round of pendingRounds) {
@@ -42,7 +44,7 @@ export const handler: Handler = async () => {
         continue;
       }
 
-      await resend.emails.send({
+      const result = await resend.emails.send({
         from: sender,
         to: recipients.map((player) => player.email),
         subject: `Reminder: ${round.location} is coming up`,
@@ -55,6 +57,10 @@ export const handler: Handler = async () => {
           maxPlayers: round.max_players
         })
       });
+
+      if (result.error) {
+        throw new Error(`Failed to send reminder for ${round.location}: ${result.error.message}`);
+      }
 
       const playerIds = recipients.map((player) => player.id);
       const { error: updateError } = await supabaseAdmin
@@ -70,7 +76,8 @@ export const handler: Handler = async () => {
     return {
       statusCode: 200,
       body: JSON.stringify({
-        processedRounds: pendingRounds.length
+        processedRounds: pendingRounds.length,
+        reminderLeadHours: REMINDER_LEAD_HOURS
       })
     };
   } catch (error) {

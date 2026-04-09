@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { FormEvent } from "react";
-import { supabase } from "../lib/supabase";
+import { appBaseUrl, supabase } from "../lib/supabase";
 
 type AuthMode = "login" | "signup" | "forgot" | "reset";
 
@@ -37,7 +37,7 @@ export function AuthCard({
   }
 
   function getResetRedirectUrl() {
-    return `${window.location.origin}${window.location.pathname}`;
+    return appBaseUrl;
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {

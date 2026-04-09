@@ -89,6 +89,7 @@ Use these values:
 - `VITE_SUPABASE_URL`: your Supabase project URL
 - `VITE_SUPABASE_ANON_KEY`: your Supabase anon/public key
 - `VITE_APP_URL`: your deployed site URL, for example `https://your-site-name.netlify.app`
+  This is also the password reset redirect target used in recovery emails.
 - `SUPABASE_URL`: the same value as `VITE_SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`: your rotated service-role key
 - `RESEND_API_KEY`: your active Resend API key
@@ -102,6 +103,7 @@ In Supabase Auth settings:
 2. Add these redirect URLs:
    - `https://<your-site-name>.netlify.app`
    - your custom domain later, for example `https://golf.yourdomain.com`
+3. Make sure `VITE_APP_URL` matches one of the allowed redirect URLs exactly.
 
 ### 7. Configure a domain
 
@@ -120,7 +122,7 @@ In Supabase Auth settings:
    - `notify-round`
    - `send-round-reminders`
 3. Confirm the scheduled reminder job is active. The current schedule is:
-   - `0 13 * * *` (`13:00 UTC` daily)
+   - `0 * * * *` (hourly, at the top of the hour)
 
 ### 9. Test the deployed app
 
@@ -138,7 +140,8 @@ Run through this checklist on the deployed site:
 
 ## Reminder emails
 
-`send-round-reminders` is configured as a Netlify Scheduled Function and runs daily at `13:00 UTC`.
+`send-round-reminders` is configured as a Netlify Scheduled Function and runs hourly.
+It targets rounds that are roughly 35 to 36 hours away so reminders are sent about 36 hours before tee time.
 
 ## Round ownership and announcements
 

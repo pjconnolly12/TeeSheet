@@ -13,4 +13,4 @@
 
 [[scheduled.functions]]
   name = "send-round-reminders"
-  cron = "0 13 * * *"
+  cron = "0 * * * *"
