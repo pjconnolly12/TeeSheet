@@ -3,6 +3,7 @@ create extension if not exists "pgcrypto";
 create table if not exists public.rounds (
   id uuid primary key default gen_random_uuid(),
   created_by uuid not null references auth.users(id) on delete cascade,
+  owner_email text,
   tee_time timestamptz not null,
   max_players integer not null check (max_players > 0 and max_players <= 4),
   location text not null,
@@ -10,6 +11,9 @@ create table if not exists public.rounds (
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );
+
+alter table if exists public.rounds
+  add column if not exists owner_email text;
 
 create table if not exists public.round_players (
   id uuid primary key default gen_random_uuid(),

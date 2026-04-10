@@ -244,6 +244,7 @@ export default function App() {
           .from("rounds")
           .insert({
             created_by: session.user.id,
+            owner_email: session.user.email?.trim().toLowerCase() ?? null,
             tee_time: payload.teeTime,
             max_players: payload.maxPlayers,
             location: payload.location,

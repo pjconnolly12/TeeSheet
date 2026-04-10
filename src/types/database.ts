@@ -9,6 +9,7 @@ export interface Database {
           id: string;
           location: string;
           max_players: number;
+          owner_email: string | null;
           tee_time: string;
           updated_at: string;
         };
@@ -19,6 +20,7 @@ export interface Database {
           id?: string;
           location: string;
           max_players: number;
+          owner_email?: string | null;
           tee_time: string;
           updated_at?: string;
         };
@@ -29,6 +31,7 @@ export interface Database {
           id?: string;
           location?: string;
           max_players?: number;
+          owner_email?: string | null;
           tee_time?: string;
           updated_at?: string;
         };

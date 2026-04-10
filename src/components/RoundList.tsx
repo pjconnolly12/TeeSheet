@@ -65,6 +65,7 @@ export function RoundList({
           rounds.map((round) => {
             const isOwner = round.created_by === currentUserId;
             const isFull = round.round_players.length >= round.max_players;
+            const ownerEmail = round.owner_email?.toLowerCase();
             const activeWaitlist = round.round_waitlist_entries.filter((entry) => !entry.promoted_at);
             const hasWaitlistSpot = activeWaitlist.some((entry) => entry.user_id === currentUserId);
             const isAlreadyPlaying = round.round_players.some(
@@ -111,11 +112,16 @@ export function RoundList({
                 </div>
 
                 <ul className="player-pill-list">
-                  {round.round_players.map((player) => (
-                    <li key={player.id}>
-                      <span>{player.email}</span>
-                    </li>
-                  ))}
+                  {round.round_players.map((player) => {
+                    const isRoundOwner = ownerEmail ? player.email.toLowerCase() === ownerEmail : false;
+
+                    return (
+                      <li key={player.id}>
+                        <span>{player.email}</span>
+                        {isRoundOwner ? <span className="owner-tag">Owner</span> : null}
+                      </li>
+                    );
+                  })}
                 </ul>
 
                 {!isOwner && isInvited && !isAlreadyPlaying && !isFull ? (
