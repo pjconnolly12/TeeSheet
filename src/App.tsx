@@ -381,6 +381,26 @@ export default function App() {
     if (markPromotedError) {
       throw markPromotedError;
     }
+
+    try {
+      const response = await fetch("/.netlify/functions/notify-waitlist-promotion", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          roundId,
+          recipientEmails: waitlistEntries.map((entry) => entry.email)
+        })
+      });
+
+      if (!response.ok) {
+        const message = await response.text();
+        setError(message || "Promoted players, but could not send notification email.");
+      }
+    } catch {
+      setError("Promoted players, but could not send notification email.");
+    }
   }
 
   async function handleJoinWaitlist(roundId: string, entry: { name: string; email: string }) {

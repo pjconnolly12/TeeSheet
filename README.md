@@ -13,6 +13,7 @@ TeeLogic is a lightweight golf round scheduler built with React, TypeScript, Sup
 - Block groups from exceeding the round capacity
 - Let golfers join a waitlist when a round is full
 - Automatically promote the earliest waitlisted golfer when a spot opens
+- Email golfers when they are automatically promoted from the waitlist
 - Send automatic round emails on create and update
 - Send reminder emails before upcoming rounds
 - Automatically remove rounds after their tee time has passed

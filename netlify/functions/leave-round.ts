@@ -1,5 +1,5 @@
 import type { Handler } from "@netlify/functions";
-import { supabaseAdmin } from "./_shared";
+import { sendWaitlistPromotionNotifications, supabaseAdmin } from "./_shared";
 
 type RoundRecord = {
   id: string;
@@ -106,6 +106,11 @@ export const handler: Handler = async (event) => {
         }
 
         promotedEmail = nextEntry.email;
+
+        await sendWaitlistPromotionNotifications({
+          roundId,
+          recipientEmails: [nextEntry.email]
+        });
       }
     }
 

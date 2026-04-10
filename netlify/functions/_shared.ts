@@ -16,6 +16,14 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export const sender = emailFrom;
 export const siteUrl = "https://teelogic.xyz/";
 
+type RoundSummary = {
+  id: string;
+  location: string;
+  tee_time: string;
+  holes: number;
+  max_players: number;
+};
+
 export function buildRoundEmail({
   heading,
   intro,
@@ -59,4 +67,67 @@ export function buildRoundEmail({
       </div>
     </div>
   `;
+}
+
+export async function sendWaitlistPromotionNotifications({
+  roundId,
+  recipientEmails
+}: {
+  roundId: string;
+  recipientEmails: string[];
+}) {
+  const uniqueRecipients = [...new Set(
+    recipientEmails.map((email) => email.trim().toLowerCase()).filter(Boolean)
+  )];
+
+  if (!uniqueRecipients.length) {
+    return { sent: 0 };
+  }
+
+  const { data: roundData, error: roundError } = await supabaseAdmin
+    .from("rounds")
+    .select("id, location, tee_time, holes, max_players")
+    .eq("id", roundId)
+    .single();
+
+  if (roundError) {
+    throw new Error(`Could not load round details: ${roundError.message}`);
+  }
+
+  const round = roundData as RoundSummary;
+  const subject = `You're in the round: ${round.location}`;
+  const html = buildRoundEmail({
+    heading: "You were moved off the waitlist",
+    intro: "A spot opened up and you were automatically added to the round.",
+    actionText: "Open TeeLogic to review the round details and get ready for tee time.",
+    location: round.location,
+    teeTime: round.tee_time,
+    holes: round.holes,
+    maxPlayers: round.max_players
+  });
+
+  const failures: string[] = [];
+
+  for (const recipient of uniqueRecipients) {
+    const result = await resend.emails.send({
+      from: sender,
+      to: recipient,
+      subject,
+      html,
+      tags: [
+        { name: "category", value: "waitlist_promotion" },
+        { name: "round_id", value: round.id.replace(/[^a-zA-Z0-9_-]/g, "-") }
+      ]
+    });
+
+    if (result.error) {
+      failures.push(`${recipient}: ${result.error.message}`);
+    }
+  }
+
+  if (failures.length > 0) {
+    throw new Error(`Some promotion notifications failed: ${failures.join("; ")}`);
+  }
+
+  return { sent: uniqueRecipients.length };
 }
