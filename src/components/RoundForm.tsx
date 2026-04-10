@@ -30,15 +30,22 @@ export function RoundForm({
 }: RoundFormProps) {
   const initialPlayers = useMemo(() => {
     if (!initialRound) {
-      return [{ ...creatorPlayer }];
+      return [{ email: creatorPlayer.email }];
     }
 
     return initialRound.round_players.length > 0
-      ? initialRound.round_players.map((player) => ({
-          email: player.email
-        }))
+      ? initialRound.round_players.map((player) => ({ email: player.email }))
       : [{ ...EMPTY_PLAYER }];
-  }, [creatorPlayer, initialRound]);
+  }, [creatorPlayer.email, initialRound]);
+
+  const distributionListOptions = useMemo(
+    () =>
+      distributionList.map((entry) => ({
+        label: entry.name || entry.email,
+        email: entry.email.trim().toLowerCase()
+      })),
+    [distributionList]
+  );
 
   const [roundDate, setRoundDate] = useState("");
   const [roundTime, setRoundTime] = useState("");
@@ -59,7 +66,7 @@ export function RoundForm({
       setMaxPlayers(4);
       setLocation("");
       setHoles(18);
-      setPlayers([{ ...creatorPlayer }]);
+      setPlayers([{ email: creatorPlayer.email }]);
       setInviteMode("all");
       setIsInviteModalOpen(false);
       setSelectedInviteEmails([]);
@@ -116,6 +123,12 @@ export function RoundForm({
 
     if (cleanedPlayers.length === 0) {
       setError("Add at least one golfer for the round.");
+      return null;
+    }
+
+    const uniqueEmails = new Set(cleanedPlayers.map((player) => player.email));
+    if (uniqueEmails.size !== cleanedPlayers.length) {
+      setError("Each golfer must have a unique email address.");
       return null;
     }
 
@@ -311,8 +324,15 @@ export function RoundForm({
               <div className="player-row player-row-email" key={index}>
                 <input
                   type="email"
+                  list={index === 0 && !initialRound ? undefined : "distribution-list-golfer-options"}
                   value={player.email}
-                  placeholder="player@example.com"
+                  placeholder={
+                    index === 0 && !initialRound
+                      ? "player@example.com"
+                      : distributionListOptions.length > 0
+                        ? "Type or choose a saved golfer"
+                        : "player@example.com"
+                  }
                   onChange={(event) => updatePlayer(index, "email", event.target.value)}
                   disabled={!initialRound && index === 0}
                   required={index === 0}
@@ -336,6 +356,16 @@ export function RoundForm({
             {saving ? "Saving..." : initialRound ? "Update round" : "Create round"}
           </button>
         </form>
+
+        {distributionListOptions.length > 0 ? (
+          <datalist id="distribution-list-golfer-options">
+            {distributionListOptions.map((entry) => (
+              <option key={entry.email} value={entry.email}>
+                {entry.label}
+              </option>
+            ))}
+          </datalist>
+        ) : null}
       </section>
 
       {isInviteModalOpen ? (

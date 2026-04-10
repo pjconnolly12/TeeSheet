@@ -12,6 +12,7 @@ interface RoundListProps {
   onJoinRound: (roundId: string) => Promise<void>;
   onLeaveRound: (roundId: string) => Promise<void>;
   onJoinWaitlist: (roundId: string) => Promise<void>;
+  onLeaveWaitlist: (roundId: string) => Promise<void>;
 }
 
 export function RoundList({
@@ -23,7 +24,8 @@ export function RoundList({
   onDelete,
   onJoinRound,
   onLeaveRound,
-  onJoinWaitlist
+  onJoinWaitlist,
+  onLeaveWaitlist
 }: RoundListProps) {
   const [submittingRoundId, setSubmittingRoundId] = useState<string | null>(null);
 
@@ -176,7 +178,17 @@ export function RoundList({
                 ) : null}
 
                 {!isOwner && hasWaitlistSpot ? (
-                  <p className="success-message">You are currently on the waitlist for this round.</p>
+                  <div className="stack-sm">
+                    <p className="success-message">You are currently on the waitlist for this round.</p>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => void onLeaveWaitlist(round.id)}
+                      disabled={saving}
+                    >
+                      {saving ? "Leaving..." : "Leave waitlist"}
+                    </button>
+                  </div>
                 ) : null}
               </article>
             );

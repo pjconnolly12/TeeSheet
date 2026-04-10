@@ -361,6 +361,7 @@ using (
 drop policy if exists "Authenticated users can view round waitlists" on public.round_waitlist_entries;
 drop policy if exists "Users can view waitlists on visible rounds" on public.round_waitlist_entries;
 drop policy if exists "Authenticated users can join round waitlists" on public.round_waitlist_entries;
+drop policy if exists "Users can leave their own waitlist entries" on public.round_waitlist_entries;
 drop policy if exists "Round owners can update waitlist entries" on public.round_waitlist_entries;
 drop policy if exists "Round owners can delete waitlist entries" on public.round_waitlist_entries;
 
@@ -397,5 +398,9 @@ using (
     select 1 from public.rounds
     where rounds.id = round_waitlist_entries.round_id
       and rounds.created_by = auth.uid()
+  )
+  or (
+    auth.uid() = user_id
+    and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
   )
 );

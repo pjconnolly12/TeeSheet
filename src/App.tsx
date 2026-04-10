@@ -439,6 +439,35 @@ export default function App() {
     await loadRounds();
   }
 
+  async function handleLeaveWaitlist(roundId: string) {
+    if (!session) {
+      return;
+    }
+
+    setError(null);
+    setSaving(true);
+
+    try {
+      const { error: deleteError } = await supabase
+        .from("round_waitlist_entries")
+        .delete()
+        .eq("round_id", roundId)
+        .eq("user_id", session.user.id)
+        .is("promoted_at", null);
+
+      if (deleteError) {
+        throw deleteError;
+      }
+
+      await loadRounds();
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : "Unable to leave waitlist.";
+      setError(message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleJoinRound(roundId: string) {
     if (!session) {
       return;
@@ -685,6 +714,7 @@ export default function App() {
           onJoinRound={handleJoinRound}
           onLeaveRound={handleLeaveRound}
           onJoinWaitlist={handleJoinWaitlist}
+          onLeaveWaitlist={handleLeaveWaitlist}
         />
       </section>
 
