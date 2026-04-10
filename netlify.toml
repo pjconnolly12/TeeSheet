@@ -14,3 +14,7 @@
 [[scheduled.functions]]
   name = "send-round-reminders"
   cron = "0 * * * *"
+
+[[scheduled.functions]]
+  name = "delete-past-rounds"
+  cron = "0 * * * *"

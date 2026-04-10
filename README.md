@@ -15,6 +15,7 @@ TeeLogic is a lightweight golf round scheduler built with React, TypeScript, Sup
 - Automatically promote the earliest waitlisted golfer when a spot opens
 - Send automatic round emails on create and update
 - Send reminder emails before upcoming rounds
+- Automatically remove rounds after their tee time has passed
 
 ## Stack
 
@@ -121,7 +122,10 @@ In Supabase Auth settings:
 2. Confirm these Netlify Functions are present:
    - `notify-round`
    - `send-round-reminders`
+   - `delete-past-rounds`
 3. Confirm the scheduled reminder job is active. The current schedule is:
+   - `0 * * * *` (hourly, at the top of the hour)
+4. Confirm the expired-round cleanup job is active. The current schedule is:
    - `0 * * * *` (hourly, at the top of the hour)
 
 ### 9. Test the deployed app
@@ -142,6 +146,11 @@ Run through this checklist on the deployed site:
 
 `send-round-reminders` is configured as a Netlify Scheduled Function and runs hourly.
 It targets rounds that are roughly 35 to 36 hours away so reminders are sent about 36 hours before tee time.
+
+## Past round cleanup
+
+The app only loads rounds whose `tee_time` is still in the future.
+`delete-past-rounds` is also configured as a Netlify Scheduled Function and runs hourly to remove expired rounds from the database.
 
 ## Round ownership and announcements
 

@@ -118,6 +118,7 @@ export default function App() {
     const { data, error: roundError } = await supabase
       .from("rounds")
       .select("*, round_players(*), round_invitations(*), round_waitlist_entries(*)")
+      .gte("tee_time", new Date().toISOString())
       .order("tee_time", { ascending: true });
 
     if (roundError) {
