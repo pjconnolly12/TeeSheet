@@ -161,6 +161,21 @@ select {
   grid-template-columns: minmax(0, 1fr) auto;
 }
 
+.player-row-golfer {
+  grid-template-columns: minmax(0, 1fr) auto;
+}
+
+.golfer-input-group {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+}
+
+.golfer-picker-button {
+  white-space: nowrap;
+}
+
 .primary-button,
 .ghost-button,
 .text-button,
@@ -398,6 +413,30 @@ select {
   overflow: auto;
 }
 
+.golfer-picker-modal {
+  width: min(720px, 100%);
+}
+
+.golfer-picker-list li {
+  padding: 0;
+}
+
+.golfer-picker-option {
+  width: 100%;
+  display: grid;
+  gap: 4px;
+  text-align: left;
+  border: 1px solid rgba(69, 97, 82, 0.12);
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 14px 16px;
+}
+
+.golfer-picker-option:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px rgba(28, 52, 39, 0.08);
+}
+
 .mobile-only {
   display: none;
 }
@@ -423,6 +462,10 @@ select {
   .player-row {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .golfer-input-group {
+    grid-template-columns: 1fr;
   }
 
   .list-entry,
@@ -473,5 +516,14 @@ select {
 
   .mobile-form-visible {
     display: block;
+  }
+
+  .golfer-picker-modal {
+    width: 100%;
+    max-height: calc(100vh - 32px);
+  }
+
+  .golfer-picker-button {
+    width: 100%;
   }
 }

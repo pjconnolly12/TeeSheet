@@ -56,8 +56,22 @@ export function RoundForm({
   const [inviteMode, setInviteMode] = useState<InviteMode>("all");
   const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [selectedInviteEmails, setSelectedInviteEmails] = useState<string[]>([]);
+  const [activeGolferPickerIndex, setActiveGolferPickerIndex] = useState<number | null>(null);
+  const [golferPickerQuery, setGolferPickerQuery] = useState("");
   const [pendingPayload, setPendingPayload] = useState<SaveRoundPayload | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const filteredGolferOptions = useMemo(() => {
+    const query = golferPickerQuery.trim().toLowerCase();
+    if (!query) {
+      return distributionListOptions;
+    }
+
+    return distributionListOptions.filter(
+      (entry) =>
+        entry.label.toLowerCase().includes(query) || entry.email.toLowerCase().includes(query)
+    );
+  }, [distributionListOptions, golferPickerQuery]);
 
   useEffect(() => {
     if (!initialRound) {
@@ -70,6 +84,8 @@ export function RoundForm({
       setInviteMode("all");
       setIsInviteModalOpen(false);
       setSelectedInviteEmails([]);
+      setActiveGolferPickerIndex(null);
+      setGolferPickerQuery("");
       setPendingPayload(null);
       setError(null);
       return;
@@ -84,6 +100,8 @@ export function RoundForm({
     setInviteMode("all");
     setIsInviteModalOpen(false);
     setSelectedInviteEmails([]);
+    setActiveGolferPickerIndex(null);
+    setGolferPickerQuery("");
     setPendingPayload(null);
     setError(null);
   }, [creatorPlayer, initialPlayers, initialRound]);
@@ -111,7 +129,33 @@ export function RoundForm({
       return;
     }
 
+    if (activeGolferPickerIndex === index) {
+      setActiveGolferPickerIndex(null);
+      setGolferPickerQuery("");
+    } else if (activeGolferPickerIndex !== null && index < activeGolferPickerIndex) {
+      setActiveGolferPickerIndex(activeGolferPickerIndex - 1);
+    }
+
     setPlayers((current) => current.filter((_, playerIndex) => playerIndex !== index));
+  }
+
+  function openGolferPicker(index: number) {
+    setActiveGolferPickerIndex(index);
+    setGolferPickerQuery("");
+  }
+
+  function closeGolferPicker() {
+    setActiveGolferPickerIndex(null);
+    setGolferPickerQuery("");
+  }
+
+  function selectSavedGolfer(email: string) {
+    if (activeGolferPickerIndex === null) {
+      return;
+    }
+
+    updatePlayer(activeGolferPickerIndex, "email", email);
+    closeGolferPicker();
   }
 
   function buildPayload(): SaveRoundPayload | null {
@@ -321,22 +365,27 @@ export function RoundForm({
             </div>
 
             {players.map((player, index) => (
-              <div className="player-row player-row-email" key={index}>
-                <input
-                  type="email"
-                  list={index === 0 && !initialRound ? undefined : "distribution-list-golfer-options"}
-                  value={player.email}
-                  placeholder={
-                    index === 0 && !initialRound
-                      ? "player@example.com"
-                      : distributionListOptions.length > 0
-                        ? "Type or choose a saved golfer"
-                        : "player@example.com"
-                  }
-                  onChange={(event) => updatePlayer(index, "email", event.target.value)}
-                  disabled={!initialRound && index === 0}
-                  required={index === 0}
-                />
+              <div className="player-row player-row-golfer" key={index}>
+                <div className="golfer-input-group">
+                  <input
+                    type="email"
+                    value={player.email}
+                    placeholder="player@example.com"
+                    onChange={(event) => updatePlayer(index, "email", event.target.value)}
+                    disabled={!initialRound && index === 0}
+                    required={index === 0}
+                  />
+                  {index === 0 && !initialRound ? null : (
+                    <button
+                      className="ghost-button golfer-picker-button"
+                      type="button"
+                      onClick={() => openGolferPicker(index)}
+                      disabled={distributionListOptions.length === 0}
+                    >
+                      Saved golfers
+                    </button>
+                  )}
+                </div>
                 <button
                   className="icon-button"
                   type="button"
@@ -356,17 +405,68 @@ export function RoundForm({
             {saving ? "Saving..." : initialRound ? "Update round" : "Create round"}
           </button>
         </form>
-
-        {distributionListOptions.length > 0 ? (
-          <datalist id="distribution-list-golfer-options">
-            {distributionListOptions.map((entry) => (
-              <option key={entry.email} value={entry.email}>
-                {entry.label}
-              </option>
-            ))}
-          </datalist>
-        ) : null}
       </section>
+
+      {activeGolferPickerIndex !== null ? (
+        <div className="modal-backdrop" role="presentation" onClick={closeGolferPicker}>
+          <section
+            className="panel modal-panel golfer-picker-modal"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="golfer-picker-title"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="panel-heading">
+              <div>
+                <p className="eyebrow">Saved Golfers</p>
+                <h2 id="golfer-picker-title">Choose a saved golfer</h2>
+              </div>
+              <button className="ghost-button" type="button" onClick={closeGolferPicker}>
+                Close
+              </button>
+            </div>
+
+            <div className="stack-sm">
+              <label>
+                <span>Search saved golfers</span>
+                <input
+                  type="text"
+                  value={golferPickerQuery}
+                  onChange={(event) => setGolferPickerQuery(event.target.value)}
+                  placeholder="Search by name or email"
+                />
+              </label>
+
+              {distributionListOptions.length === 0 ? (
+                <div className="empty-state">
+                  <p>No saved golfers yet.</p>
+                  <span>Add people to your distribution list to reuse them here.</span>
+                </div>
+              ) : filteredGolferOptions.length === 0 ? (
+                <div className="empty-state">
+                  <p>No matching golfers.</p>
+                  <span>Try a different name or email search.</span>
+                </div>
+              ) : (
+                <ul className="player-pill-list golfer-picker-list">
+                  {filteredGolferOptions.map((entry) => (
+                    <li key={entry.email}>
+                      <button
+                        className="golfer-picker-option"
+                        type="button"
+                        onClick={() => selectSavedGolfer(entry.email)}
+                      >
+                        <span>{entry.label}</span>
+                        <small>{entry.email}</small>
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </section>
+        </div>
+      ) : null}
 
       {isInviteModalOpen ? (
         <div className="modal-backdrop" role="presentation" onClick={() => setIsInviteModalOpen(false)}>
