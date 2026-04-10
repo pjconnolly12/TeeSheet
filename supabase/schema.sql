@@ -45,11 +45,13 @@ create table if not exists public.round_waitlist_entries (
   id uuid primary key default gen_random_uuid(),
   round_id uuid not null references public.rounds(id) on delete cascade,
   user_id uuid references auth.users(id) on delete set null,
-  name text not null,
   email text not null,
   promoted_at timestamptz,
   created_at timestamptz not null default timezone('utc', now())
 );
+
+alter table if exists public.round_waitlist_entries
+  drop column if exists name;
 
 create unique index if not exists round_players_round_id_email_idx
   on public.round_players (round_id, lower(email));
@@ -370,7 +372,11 @@ using (public.user_can_view_round(round_id));
 create policy "Authenticated users can join round waitlists"
 on public.round_waitlist_entries
 for insert
-with check (auth.role() = 'authenticated');
+with check (
+  auth.role() = 'authenticated'
+  and auth.uid() = user_id
+  and lower(email) = lower(coalesce(auth.jwt() ->> 'email', ''))
+);
 
 create policy "Round owners can update waitlist entries"
 on public.round_waitlist_entries

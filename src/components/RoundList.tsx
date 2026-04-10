@@ -11,7 +11,7 @@ interface RoundListProps {
   onDelete: (round: RoundWithPlayers) => Promise<void>;
   onJoinRound: (roundId: string) => Promise<void>;
   onLeaveRound: (roundId: string) => Promise<void>;
-  onJoinWaitlist: (roundId: string, entry: { name: string; email: string }) => Promise<void>;
+  onJoinWaitlist: (roundId: string) => Promise<void>;
 }
 
 export function RoundList({
@@ -25,22 +25,16 @@ export function RoundList({
   onLeaveRound,
   onJoinWaitlist
 }: RoundListProps) {
-  const [draftNames, setDraftNames] = useState<Record<string, string>>({});
-  const [draftEmails, setDraftEmails] = useState<Record<string, string>>({});
   const [submittingRoundId, setSubmittingRoundId] = useState<string | null>(null);
 
   async function handleWaitlistSubmit(roundId: string) {
-    const name = (draftNames[roundId] ?? "").trim();
-    const email = (draftEmails[roundId] ?? currentUserEmail).trim().toLowerCase();
-    if (!name || !email) {
+    if (!currentUserEmail.trim()) {
       return;
     }
 
     setSubmittingRoundId(roundId);
     try {
-      await onJoinWaitlist(roundId, { name, email });
-      setDraftNames((current) => ({ ...current, [roundId]: "" }));
-      setDraftEmails((current) => ({ ...current, [roundId]: currentUserEmail }));
+      await onJoinWaitlist(roundId);
     } finally {
       setSubmittingRoundId(null);
     }
@@ -158,8 +152,7 @@ export function RoundList({
                     <ul className="player-pill-list">
                       {activeWaitlist.map((entry) => (
                         <li key={entry.id}>
-                          <span>{entry.name}</span>
-                          <small>{entry.email}</small>
+                          <span>{entry.email}</span>
                         </li>
                       ))}
                     </ul>
@@ -170,29 +163,13 @@ export function RoundList({
                   <div className="stack-sm waitlist-block">
                     <p className="muted">Round is full. Join the waitlist and TeeLogic will promote you automatically if a spot opens.</p>
                     <div className="player-row">
-                      <input
-                        type="text"
-                        value={draftNames[round.id] ?? ""}
-                        placeholder="Your name"
-                        onChange={(event) =>
-                          setDraftNames((current) => ({ ...current, [round.id]: event.target.value }))
-                        }
-                      />
-                      <input
-                        type="email"
-                        value={draftEmails[round.id] ?? currentUserEmail}
-                        placeholder="you@example.com"
-                        onChange={(event) =>
-                          setDraftEmails((current) => ({ ...current, [round.id]: event.target.value }))
-                        }
-                      />
                       <button
                         className="primary-button"
                         type="button"
                         onClick={() => handleWaitlistSubmit(round.id)}
-                        disabled={submittingRoundId === round.id}
+                        disabled={submittingRoundId === round.id || !currentUserEmail.trim()}
                       >
-                        {submittingRoundId === round.id ? "Joining..." : "Join waitlist"}
+                        {submittingRoundId === round.id ? "Joining..." : "Join"}
                       </button>
                     </div>
                   </div>

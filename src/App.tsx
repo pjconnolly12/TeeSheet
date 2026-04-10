@@ -403,8 +403,14 @@ export default function App() {
     }
   }
 
-  async function handleJoinWaitlist(roundId: string, entry: { name: string; email: string }) {
+  async function handleJoinWaitlist(roundId: string) {
     if (!session) {
+      return;
+    }
+
+    const email = session.user.email?.trim().toLowerCase();
+    if (!email) {
+      setError("Your account is missing an email address.");
       return;
     }
 
@@ -412,8 +418,7 @@ export default function App() {
 
     const { error: insertError } = await supabase.from("round_waitlist_entries").insert({
       round_id: roundId,
-      name: entry.name.trim(),
-      email: entry.email.trim().toLowerCase(),
+      email,
       user_id: session.user.id
     });
 

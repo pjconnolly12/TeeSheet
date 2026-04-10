@@ -125,7 +125,6 @@ export interface Database {
           created_at: string;
           email: string;
           id: string;
-          name: string;
           promoted_at: string | null;
           round_id: string;
           user_id: string | null;
@@ -134,7 +133,6 @@ export interface Database {
           created_at?: string;
           email: string;
           id?: string;
-          name: string;
           promoted_at?: string | null;
           round_id: string;
           user_id?: string | null;
@@ -143,7 +141,6 @@ export interface Database {
           created_at?: string;
           email?: string;
           id?: string;
-          name?: string;
           promoted_at?: string | null;
           round_id?: string;
           user_id?: string | null;

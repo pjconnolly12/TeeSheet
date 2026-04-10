@@ -4,6 +4,7 @@ import { sendWaitlistPromotionNotifications, supabaseAdmin } from "./_shared";
 type RoundRecord = {
   id: string;
   max_players: number;
+  tee_time: string;
   round_players: Array<{ id: string; email: string }>;
 };
 
@@ -21,6 +22,8 @@ export const handler: Handler = async (event) => {
   }
 
   try {
+    const leaveBlockedMessage =
+      "You cannot leave the round within 24 hours of tee time, please contact the owner of the round directly to manage your round, thanks.";
     const payload = JSON.parse(event.body ?? "{}") as {
       roundId?: string;
       email?: string;
@@ -38,7 +41,7 @@ export const handler: Handler = async (event) => {
 
     const { data: roundData, error: roundError } = await supabaseAdmin
       .from("rounds")
-      .select("id, max_players, round_players(id, email)")
+      .select("id, max_players, tee_time, round_players(id, email)")
       .eq("id", roundId)
       .single();
 
@@ -47,6 +50,16 @@ export const handler: Handler = async (event) => {
     }
 
     const round = roundData as RoundRecord;
+    const teeTime = new Date(round.tee_time).getTime();
+    const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
+
+    if (Number.isFinite(teeTime) && teeTime - Date.now() <= twentyFourHoursInMs) {
+      return {
+        statusCode: 403,
+        body: leaveBlockedMessage
+      };
+    }
+
     const playerToRemove = round.round_players.find(
       (player) => player.email.trim().toLowerCase() === email
     );
