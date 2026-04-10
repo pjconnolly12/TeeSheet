@@ -3,7 +3,6 @@ import { addHours } from "date-fns";
 import { buildRoundEmail, resend, sender, supabaseAdmin } from "./_shared";
 
 const REMINDER_LEAD_HOURS = 36;
-const REMINDER_WINDOW_HOURS = 1;
 
 type RoundRecord = {
   id: string;
@@ -21,14 +20,13 @@ type RoundRecord = {
 export const handler: Handler = async () => {
   try {
     const now = new Date();
-    const reminderWindowStart = addHours(now, REMINDER_LEAD_HOURS - REMINDER_WINDOW_HOURS);
-    const reminderWindowEnd = addHours(now, REMINDER_LEAD_HOURS);
+    const reminderCutoff = addHours(now, REMINDER_LEAD_HOURS);
 
     const { data: rounds, error } = await supabaseAdmin
       .from("rounds")
       .select("id, location, tee_time, holes, max_players, round_players(id, email, reminder_sent_at)")
-      .gte("tee_time", reminderWindowStart.toISOString())
-      .lte("tee_time", reminderWindowEnd.toISOString());
+      .gt("tee_time", now.toISOString())
+      .lte("tee_time", reminderCutoff.toISOString());
 
     if (error) {
       throw error;
@@ -78,7 +76,8 @@ export const handler: Handler = async () => {
       statusCode: 200,
       body: JSON.stringify({
         processedRounds: pendingRounds.length,
-        reminderLeadHours: REMINDER_LEAD_HOURS
+        reminderLeadHours: REMINDER_LEAD_HOURS,
+        reminderCutoff: reminderCutoff.toISOString()
       })
     };
   } catch (error) {
