@@ -12,9 +12,21 @@ export interface PlayerInput {
   email: string;
 }
 
+export type InviteMode = "all" | "selected";
+
 export interface DistributionListEntryInput {
   name: string;
   email: string;
+}
+
+export interface SaveRoundPayload {
+  teeTime: string;
+  maxPlayers: number;
+  location: string;
+  holes: number;
+  players: PlayerInput[];
+  inviteMode: InviteMode;
+  selectedInviteEmails?: string[];
 }
 
 export interface RoundWithPlayers extends RoundRow {

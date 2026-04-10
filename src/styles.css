@@ -306,6 +306,35 @@ select {
   border-top: 1px solid rgba(69, 97, 82, 0.14);
 }
 
+.invite-mode-toggle,
+.modal-actions {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.invite-checkbox-row {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.invite-checkbox-row input {
+  width: auto;
+  margin: 0;
+}
+
+.invite-checkbox-row > div {
+  display: grid;
+  gap: 4px;
+}
+
+.invite-selection-item {
+  align-items: stretch;
+}
+
 .player-pill-list small,
 .muted {
   color: #587261;
@@ -397,7 +426,9 @@ select {
   }
 
   .list-entry,
-  .distribution-list-summary {
+  .distribution-list-summary,
+  .invite-mode-toggle,
+  .modal-actions {
     display: grid;
     gap: 12px;
   }

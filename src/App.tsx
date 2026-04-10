@@ -8,18 +8,11 @@ import { supabase } from "./lib/supabase";
 import type {
   DistributionListEntryInput,
   DistributionListEntryRow,
+  SaveRoundPayload,
   PlayerInput,
   RoundWithPlayers
 } from "./types/app";
 import { notifyRound } from "./utils/email";
-
-interface SaveRoundPayload {
-  teeTime: string;
-  maxPlayers: number;
-  location: string;
-  holes: number;
-  players: PlayerInput[];
-}
 
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
@@ -188,7 +181,7 @@ export default function App() {
 
   async function handleSaveRound(payload: SaveRoundPayload) {
     if (!session) {
-      return;
+      return false;
     }
 
     setSaving(true);
@@ -213,6 +206,8 @@ export default function App() {
       if (finalPlayers.length > payload.maxPlayers) {
         throw new Error("The player list is larger than the round capacity.");
       }
+
+      let invitationEntries: DistributionListEntryRow[] = [];
 
       let roundId = editingRound?.id;
 
@@ -278,11 +273,23 @@ export default function App() {
 
       if (!editingRound) {
         const playerEmails = new Set(finalPlayers.map((player) => player.email));
+        const selectedInviteEmails =
+          payload.inviteMode === "selected"
+            ? new Set(
+                (payload.selectedInviteEmails ?? [])
+                  .map((email) => email.trim().toLowerCase())
+                  .filter(Boolean)
+              )
+            : null;
+        invitationEntries = distributionList.filter((entry) => {
+          const email = entry.email.trim().toLowerCase();
+          return email && !playerEmails.has(email) && (selectedInviteEmails ? selectedInviteEmails.has(email) : true);
+        });
         const invitationEmails = Array.from(
           new Set(
-            distributionList
+            invitationEntries
               .map((entry) => entry.email.trim().toLowerCase())
-              .filter((email) => email && !playerEmails.has(email))
+              .filter(Boolean)
           )
         );
 
@@ -321,7 +328,7 @@ export default function App() {
                 name: player.email,
                 email: player.email
               })),
-              ...distributionList.map((entry) => ({
+              ...invitationEntries.map((entry) => ({
                 name: entry.name ?? entry.email,
                 email: entry.email
               }))
@@ -331,9 +338,11 @@ export default function App() {
       await loadRounds();
       setEditingRound(null);
       setIsMobileRoundFormOpen(false);
+      return true;
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Unable to save round.";
       setError(message);
+      return false;
     } finally {
       setSaving(false);
     }
@@ -654,6 +663,7 @@ export default function App() {
           <RoundForm
             initialRound={editingRound}
             creatorPlayer={buildCreatorPlayer() ?? { email: "" }}
+            distributionList={distributionList}
             onCancelEdit={() => {
               setEditingRound(null);
               setIsMobileRoundFormOpen(false);
