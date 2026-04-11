@@ -7,7 +7,7 @@ import type {
   RoundWithPlayers,
   SaveRoundPayload
 } from "../types/app";
-import { toDateInputValue, toTimeInputValue } from "../utils/date";
+import { localDateTimeToUtcIso, toDateInputValue, toTimeInputValue } from "../utils/date";
 
 interface RoundFormProps {
   initialRound?: RoundWithPlayers | null;
@@ -181,7 +181,7 @@ export function RoundForm({
       return null;
     }
 
-    const teeTime = new Date(`${roundDate}T${roundTime}`).toISOString();
+    const teeTime = localDateTimeToUtcIso(roundDate, roundTime);
     return {
       teeTime,
       maxPlayers,
