@@ -1,15 +1,21 @@
 import type { DistributionListEntryInput, PlayerInput } from "../types/app";
 
+export interface NotifyRecipient {
+  email: string;
+  name: string;
+}
+
 export interface NotifyRoundPayload {
   kind: "created" | "updated";
   roundId: string;
-  ownerId: string;
   location: string;
   teeTime: string;
   holes: number;
   maxPlayers: number;
   players: PlayerInput[];
-  recipients: DistributionListEntryInput[];
+  addedPlayers?: NotifyRecipient[];
+  invitedRecipients?: NotifyRecipient[];
+  updatedRecipients?: NotifyRecipient[];
 }
 
 export async function notifyRound(payload: NotifyRoundPayload) {

@@ -325,30 +325,52 @@ export default function App() {
 
       await promoteWaitlist(roundId, payload.maxPlayers, finalPlayers.length);
 
+      const addedPlayerRecipients = Array.from(
+        new Map(
+          finalPlayers.map((player) => {
+            const email = player.email.trim().toLowerCase();
+            return [
+              email,
+              {
+                name: player.email,
+                email
+              }
+            ];
+          })
+        ).values()
+      );
+
+      const addedPlayerEmails = new Set(addedPlayerRecipients.map((recipient) => recipient.email));
+      const invitedRecipients = Array.from(
+        new Map(
+          invitationEntries
+            .map((entry) => {
+              const email = entry.email.trim().toLowerCase();
+              return email
+                ? [
+                    email,
+                    {
+                      name: entry.name ?? entry.email,
+                      email
+                    }
+                  ]
+                : null;
+            })
+            .filter(Boolean) as Array<[string, { name: string; email: string }]>
+        ).values()
+      ).filter((recipient) => !addedPlayerEmails.has(recipient.email));
+
       await notifyRound({
         kind: editingRound ? "updated" : "created",
         roundId,
-        ownerId: session.user.id,
         location: payload.location,
         teeTime: payload.teeTime,
         holes: payload.holes,
         maxPlayers: payload.maxPlayers,
         players: finalPlayers,
-        recipients: editingRound
-          ? finalPlayers.map((player) => ({
-              name: player.email,
-              email: player.email
-            }))
-          : [
-              ...finalPlayers.map((player) => ({
-                name: player.email,
-                email: player.email
-              })),
-              ...invitationEntries.map((entry) => ({
-                name: entry.name ?? entry.email,
-                email: entry.email
-              }))
-            ]
+        addedPlayers: editingRound ? undefined : addedPlayerRecipients,
+        invitedRecipients: editingRound ? undefined : invitedRecipients,
+        updatedRecipients: editingRound ? addedPlayerRecipients : undefined
       });
 
       await loadRounds();
