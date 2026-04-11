@@ -11,10 +11,8 @@
 [functions]
   node_bundler = "esbuild"
 
-[[scheduled.functions]]
-  name = "send-round-reminders"
-  cron = "0 * * * *"
+[functions."send-round-reminders"]
+  schedule = "0 * * * *"
 
-[[scheduled.functions]]
-  name = "delete-past-rounds"
-  cron = "0 * * * *"
+[functions."delete-past-rounds"]
+  schedule = "0 * * * *"

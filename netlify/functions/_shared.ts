@@ -6,15 +6,16 @@ const resendApiKey = process.env.RESEND_API_KEY;
 const emailFrom = process.env.EMAIL_FROM;
 const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseServiceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const appUrl = process.env.VITE_APP_URL;
 
-if (!resendApiKey || !emailFrom || !supabaseUrl || !supabaseServiceRoleKey) {
+if (!resendApiKey || !emailFrom || !supabaseUrl || !supabaseServiceRoleKey || !appUrl) {
   throw new Error("Missing server environment variables.");
 }
 
 export const resend = new Resend(resendApiKey);
 export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export const sender = emailFrom;
-export const siteUrl = "https://teelogic.xyz/";
+export const siteUrl = appUrl;
 
 type RoundSummary = {
   id: string;

@@ -146,7 +146,13 @@ Run through this checklist on the deployed site:
 ## Reminder emails
 
 `send-round-reminders` is configured as a Netlify Scheduled Function and runs hourly.
-It targets rounds that are roughly 35 to 36 hours away so reminders are sent about 36 hours before tee time.
+It targets rounds within the next 36 hours and only emails players whose `reminder_sent_at` is still null.
+Scheduled Functions only run automatically on the published production deploy, not in local development, branch deploys, or Deploy Previews.
+For manual verification, you can invoke the function yourself:
+
+```bash
+netlify functions:invoke send-round-reminders
+```
 
 ## Past round cleanup
 
