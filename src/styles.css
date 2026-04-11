@@ -35,6 +35,8 @@ button {
 .app-shell {
   min-height: 100vh;
   padding: 32px;
+  width: 100%;
+  max-width: 100%;
 }
 
 .auth-shell,
@@ -81,12 +83,15 @@ button {
   display: grid;
   gap: 24px;
   grid-template-columns: minmax(320px, 420px) minmax(0, 1fr);
+  min-width: 0;
 }
 
 .auth-card,
 .panel {
   border-radius: 24px;
   padding: 24px;
+  width: 100%;
+  min-width: 0;
 }
 
 .auth-card {
@@ -228,6 +233,7 @@ select {
 .round-card {
   border-radius: 22px;
   padding: 20px;
+  min-width: 0;
 }
 
 .round-card h3,
@@ -281,6 +287,7 @@ select {
   padding: 12px 14px;
   border-radius: 16px;
   background: rgba(240, 247, 242, 0.9);
+  min-width: 0;
 }
 
 .owner-tag {
@@ -444,6 +451,7 @@ select {
 @media (max-width: 960px) {
   .app-shell {
     padding: 20px;
+    overflow-x: clip;
   }
 
   .content-grid,
@@ -462,6 +470,23 @@ select {
   .player-row {
     grid-template-columns: 1fr;
     display: grid;
+  }
+
+  .content-grid,
+  .content-grid > div,
+  .panel,
+  .round-list,
+  .round-card,
+  .player-row,
+  .player-row-golfer,
+  .golfer-input-group,
+  .players-header,
+  .round-card-header,
+  .player-pill-list,
+  .player-pill-list li {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .golfer-input-group {
@@ -523,7 +548,10 @@ select {
     max-height: calc(100vh - 32px);
   }
 
-  .golfer-picker-button {
-    width: 100%;
+  .player-pill-list li > span,
+  .player-pill-list li > div,
+  .round-card-header > div,
+  .players-header > div {
+    min-width: 0;
   }
 }
