@@ -223,6 +223,7 @@ export default function App() {
         throw new Error("The player list is larger than the round capacity.");
       }
 
+      const openSpots = payload.maxPlayers - finalPlayers.length;
       let invitationEntries: DistributionListEntryRow[] = [];
 
       let roundId = editingRound?.id;
@@ -287,7 +288,7 @@ export default function App() {
         throw playersError;
       }
 
-      if (!editingRound) {
+      if (!editingRound && openSpots > 0) {
         const playerEmails = new Set(finalPlayers.map((player) => player.email));
         const selectedInviteEmails =
           payload.inviteMode === "selected"
