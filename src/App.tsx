@@ -14,6 +14,9 @@ import type {
 } from "./types/app";
 import { notifyRound } from "./utils/email";
 
+const LEAVE_ROUND_BLOCKED_MESSAGE =
+  "You cannot leave the round within 24 hours of tee time, please contact the owner of the round directly to manage your round, thanks.";
+
 export default function App() {
   const [session, setSession] = useState<Session | null>(null);
   const [isRecoveringPassword, setIsRecoveringPassword] = useState(false);
@@ -37,6 +40,18 @@ export default function App() {
     return {
       email: session.user.email.toLowerCase()
     };
+  }
+
+  function getLeaveRoundBlockedMessage(teeTimeValue: string) {
+    const teeTime = new Date(teeTimeValue).getTime();
+    if (!Number.isFinite(teeTime)) {
+      return null;
+    }
+
+    const timeUntilTeeTime = teeTime - Date.now();
+    const twentyFourHoursInMs = 24 * 60 * 60 * 1000;
+
+    return timeUntilTeeTime <= twentyFourHoursInMs ? LEAVE_ROUND_BLOCKED_MESSAGE : null;
   }
 
   useEffect(() => {
@@ -500,7 +515,7 @@ export default function App() {
     }
   }
 
-  async function handleLeaveRound(roundId: string) {
+  async function handleLeaveRound(roundId: string, teeTimeValue: string) {
     if (!session) {
       return;
     }
@@ -508,6 +523,15 @@ export default function App() {
     const email = session.user.email?.trim().toLowerCase();
     if (!email) {
       setError("Your account is missing an email address.");
+      return;
+    }
+
+    const blockedMessage = getLeaveRoundBlockedMessage(teeTimeValue);
+    if (blockedMessage) {
+      setLeaveRoundErrors((current) => ({
+        ...current,
+        [roundId]: blockedMessage
+      }));
       return;
     }
 

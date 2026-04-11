@@ -11,7 +11,7 @@ interface RoundListProps {
   onEdit: (round: RoundWithPlayers) => void;
   onDelete: (round: RoundWithPlayers) => Promise<void>;
   onJoinRound: (roundId: string) => Promise<void>;
-  onLeaveRound: (roundId: string) => Promise<void>;
+  onLeaveRound: (roundId: string, teeTimeValue: string) => Promise<void>;
   onJoinWaitlist: (roundId: string) => Promise<void>;
   onLeaveWaitlist: (roundId: string) => Promise<void>;
 }
@@ -149,7 +149,7 @@ export function RoundList({
                     <button
                       className="ghost-button"
                       type="button"
-                      onClick={() => void onLeaveRound(round.id)}
+                      onClick={() => void onLeaveRound(round.id, round.tee_time)}
                       disabled={saving}
                     >
                       {saving ? "Leaving..." : "Leave round"}
