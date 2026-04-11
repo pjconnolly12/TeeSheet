@@ -293,10 +293,7 @@ export function RoundForm({
           <div className="grid-two">
             <label>
               <span>Number of Players</span>
-              <input
-                type="number"
-                min={1}
-                max={4}
+              <select
                 value={maxPlayers}
                 onChange={(event) => {
                   const nextValue = Number(event.target.value);
@@ -305,8 +302,11 @@ export function RoundForm({
                     setPlayers((current) => current.slice(0, nextValue));
                   }
                 }}
-                required
-              />
+              >
+                <option value={2}>2</option>
+                <option value={3}>3</option>
+                <option value={4}>4</option>
+              </select>
             </label>
 
             <label>
@@ -405,7 +405,7 @@ export function RoundForm({
           {error ? <p className="error-message">{error}</p> : null}
 
           <button className="primary-button" type="submit" disabled={saving}>
-            {saving ? "Saving..." : initialRound ? "Update round" : "Create round"}
+            {saving ? "Saving..." : initialRound ? "Update Round" : "Create Round"}
           </button>
         </form>
       </section>
