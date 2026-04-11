@@ -359,9 +359,6 @@ export function RoundForm({
                   {players.filter((player) => player.email).length} of {maxPlayers} spots filled
                 </p>
               </div>
-              <button className="ghost-button" type="button" onClick={addPlayerRow}>
-                Add Golfer
-              </button>
             </div>
 
             {players.map((player, index) => (
@@ -397,6 +394,12 @@ export function RoundForm({
                 </button>
               </div>
             ))}
+
+            <div className="add-golfer-action">
+              <button className="ghost-button" type="button" onClick={addPlayerRow}>
+                Add Golfer
+              </button>
+            </div>
           </div>
 
           {error ? <p className="error-message">{error}</p> : null}

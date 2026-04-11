@@ -119,6 +119,11 @@ button {
   gap: 12px;
 }
 
+.add-golfer-action {
+  display: flex;
+  justify-content: flex-start;
+}
+
 .grid-two {
   display: grid;
   gap: 16px;
