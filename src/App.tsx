@@ -27,6 +27,7 @@ export default function App() {
   const [saving, setSaving] = useState(false);
   const [savingDistributionList, setSavingDistributionList] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [leaveRoundErrors, setLeaveRoundErrors] = useState<Record<string, string>>({});
 
   function buildCreatorPlayer(): PlayerInput | null {
     if (!session?.user.email) {
@@ -510,7 +511,15 @@ export default function App() {
       return;
     }
 
-    setError(null);
+    setLeaveRoundErrors((current) => {
+      if (!current[roundId]) {
+        return current;
+      }
+
+      const nextErrors = { ...current };
+      delete nextErrors[roundId];
+      return nextErrors;
+    });
     setSaving(true);
 
     try {
@@ -527,10 +536,22 @@ export default function App() {
         throw new Error(message || "Unable to leave round.");
       }
 
+      setLeaveRoundErrors((current) => {
+        if (!current[roundId]) {
+          return current;
+        }
+
+        const nextErrors = { ...current };
+        delete nextErrors[roundId];
+        return nextErrors;
+      });
       await loadRounds();
     } catch (caughtError) {
       const message = caughtError instanceof Error ? caughtError.message : "Unable to leave round.";
-      setError(message);
+      setLeaveRoundErrors((current) => ({
+        ...current,
+        [roundId]: message
+      }));
     } finally {
       setSaving(false);
     }
@@ -706,6 +727,7 @@ export default function App() {
           currentUserId={session.user.id}
           currentUserEmail={session.user.email ?? ""}
           saving={saving}
+          leaveRoundErrors={leaveRoundErrors}
           onEdit={(round) => {
             setEditingRound(round);
             setIsMobileRoundFormOpen(true);

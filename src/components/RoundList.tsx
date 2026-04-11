@@ -7,6 +7,7 @@ interface RoundListProps {
   currentUserId: string;
   currentUserEmail: string;
   saving: boolean;
+  leaveRoundErrors: Record<string, string>;
   onEdit: (round: RoundWithPlayers) => void;
   onDelete: (round: RoundWithPlayers) => Promise<void>;
   onJoinRound: (roundId: string) => Promise<void>;
@@ -20,6 +21,7 @@ export function RoundList({
   currentUserId,
   currentUserEmail,
   saving,
+  leaveRoundErrors,
   onEdit,
   onDelete,
   onJoinRound,
@@ -70,6 +72,7 @@ export function RoundList({
             const isInvited = round.round_invitations.some(
               (invite) => invite.email.toLowerCase() === currentUserEmail.toLowerCase()
             );
+            const leaveRoundError = leaveRoundErrors[round.id];
 
             return (
               <article className="round-card" key={round.id}>
@@ -151,6 +154,7 @@ export function RoundList({
                     >
                       {saving ? "Leaving..." : "Leave round"}
                     </button>
+                    {leaveRoundError ? <p className="error-message">{leaveRoundError}</p> : null}
                   </div>
                 ) : null}
 
