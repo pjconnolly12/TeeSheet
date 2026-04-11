@@ -514,6 +514,16 @@ select {
     gap: 12px;
   }
 
+  .list-entry {
+    align-items: start;
+    gap: 14px;
+  }
+
+  .list-entry-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
   .desktop-only {
     display: none;
   }
