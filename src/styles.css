@@ -317,6 +317,19 @@ select {
   flex-wrap: wrap;
 }
 
+.player-entry-owner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
+.player-entry-owner > span:first-child {
+  min-width: 0;
+}
+
 .distribution-list-summary {
   display: flex;
   justify-content: space-between;
@@ -553,5 +566,11 @@ select {
   .round-card-header > div,
   .players-header > div {
     min-width: 0;
+  }
+
+  .player-entry-owner {
+    display: grid;
+    justify-items: start;
+    gap: 8px;
   }
 }

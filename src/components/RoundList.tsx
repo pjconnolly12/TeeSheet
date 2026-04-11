@@ -113,8 +113,14 @@ export function RoundList({
 
                     return (
                       <li key={player.id}>
-                        <span>{player.email}</span>
-                        {isRoundOwner ? <span className="owner-tag">Owner</span> : null}
+                        {isRoundOwner ? (
+                          <div className="player-entry-owner">
+                            <span>{player.email}</span>
+                            <span className="owner-tag">Owner</span>
+                          </div>
+                        ) : (
+                          <span>{player.email}</span>
+                        )}
                       </li>
                     );
                   })}
