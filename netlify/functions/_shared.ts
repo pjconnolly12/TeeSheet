@@ -1,5 +1,4 @@
 import { createClient } from "@supabase/supabase-js";
-import { format } from "date-fns";
 import { Resend } from "resend";
 
 const resendApiKey = process.env.RESEND_API_KEY;
@@ -21,9 +20,21 @@ type RoundSummary = {
   id: string;
   location: string;
   tee_time: string;
+  timezone: string;
   holes: number;
   max_players: number;
 };
+
+function formatInTimeZone(value: string, timeZone: string, options: Intl.DateTimeFormatOptions) {
+  try {
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone,
+      ...options
+    }).format(new Date(value));
+  } catch {
+    return new Intl.DateTimeFormat("en-US", options).format(new Date(value));
+  }
+}
 
 export function buildRoundEmail({
   heading,
@@ -31,6 +42,7 @@ export function buildRoundEmail({
   actionText,
   location,
   teeTime,
+  timeZone,
   holes,
   maxPlayers
 }: {
@@ -39,9 +51,22 @@ export function buildRoundEmail({
   actionText: string;
   location: string;
   teeTime: string;
+  timeZone: string;
   holes: number;
   maxPlayers: number;
 }) {
+  const formattedDate = formatInTimeZone(teeTime, timeZone, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+  const formattedTime = formatInTimeZone(teeTime, timeZone, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+
   return `
     <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#f6f8f3;">
       <div style="background:#ffffff;border-radius:18px;padding:24px;border:1px solid #dde5da;">
@@ -50,8 +75,8 @@ export function buildRoundEmail({
         <p style="margin:0 0 20px;color:#496454;">${intro}</p>
         <div style="background:#eef6e4;border-radius:16px;padding:16px;">
           <p style="margin:0 0 8px;"><strong>Location:</strong> ${location}</p>
-          <p style="margin:0 0 8px;"><strong>Date:</strong> ${format(new Date(teeTime), "EEEE, MMMM d, yyyy")}</p>
-          <p style="margin:0 0 8px;"><strong>Time:</strong> ${format(new Date(teeTime), "h:mm a")}</p>
+          <p style="margin:0 0 8px;"><strong>Date:</strong> ${formattedDate}</p>
+          <p style="margin:0 0 8px;"><strong>Time:</strong> ${formattedTime}</p>
           <p style="margin:0 0 8px;"><strong>Holes:</strong> ${holes}</p>
           <p style="margin:0;"><strong>Group size:</strong> ${maxPlayers}</p>
         </div>
@@ -87,7 +112,7 @@ export async function sendWaitlistPromotionNotifications({
 
   const { data: roundData, error: roundError } = await supabaseAdmin
     .from("rounds")
-    .select("id, location, tee_time, holes, max_players")
+    .select("id, location, tee_time, timezone, holes, max_players")
     .eq("id", roundId)
     .single();
 
@@ -103,6 +128,7 @@ export async function sendWaitlistPromotionNotifications({
     actionText: "Open TeeLogic to review the round details and get ready for tee time.",
     location: round.location,
     teeTime: round.tee_time,
+    timeZone: round.timezone,
     holes: round.holes,
     maxPlayers: round.max_players
   });

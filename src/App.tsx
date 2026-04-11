@@ -233,6 +233,7 @@ export default function App() {
           .from("rounds")
           .update({
             tee_time: payload.teeTime,
+            timezone: payload.timeZone,
             max_players: payload.maxPlayers,
             location: payload.location,
             holes: payload.holes,
@@ -259,6 +260,7 @@ export default function App() {
             created_by: session.user.id,
             owner_email: session.user.email?.trim().toLowerCase() ?? null,
             tee_time: payload.teeTime,
+            timezone: payload.timeZone,
             max_players: payload.maxPlayers,
             location: payload.location,
             holes: payload.holes
@@ -381,6 +383,7 @@ export default function App() {
         roundId,
         location: payload.location,
         teeTime: payload.teeTime,
+        timeZone: payload.timeZone,
         holes: payload.holes,
         maxPlayers: payload.maxPlayers,
         players: finalPlayers,

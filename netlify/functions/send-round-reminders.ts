@@ -8,6 +8,7 @@ type RoundRecord = {
   id: string;
   location: string;
   tee_time: string;
+  timezone: string;
   holes: number;
   max_players: number;
   round_players: Array<{
@@ -29,7 +30,7 @@ export const handler: Handler = async () => {
 
     const { data: rounds, error } = await supabaseAdmin
       .from("rounds")
-      .select("id, location, tee_time, holes, max_players, round_players(id, email, reminder_sent_at)")
+      .select("id, location, tee_time, timezone, holes, max_players, round_players(id, email, reminder_sent_at)")
       .gt("tee_time", now.toISOString())
       .lte("tee_time", reminderCutoff.toISOString());
 
@@ -93,6 +94,7 @@ export const handler: Handler = async () => {
           actionText: "Open TeeLogic to review your round details and be ready for tee time.",
           location: round.location,
           teeTime: round.tee_time,
+          timeZone: round.timezone,
           holes: round.holes,
           maxPlayers: round.max_players
         })

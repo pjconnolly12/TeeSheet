@@ -21,6 +21,7 @@ export interface DistributionListEntryInput {
 
 export interface SaveRoundPayload {
   teeTime: string;
+  timeZone: string;
   maxPlayers: number;
   location: string;
   holes: number;

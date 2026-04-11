@@ -215,8 +215,10 @@ export function RoundForm({
     }
 
     const teeTime = localDateTimeToUtcIso(roundDate, roundTime);
+    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
     return {
       teeTime,
+      timeZone,
       maxPlayers,
       location: location.trim(),
       holes,

@@ -96,6 +96,7 @@ export const handler: Handler = async (event) => {
       roundId: string;
       location: string;
       teeTime: string;
+      timeZone: string;
       holes: number;
       maxPlayers: number;
       players: Array<{ email: string; name: string }>;
@@ -125,6 +126,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Open TeeLogic to review the round and get ready for tee time.",
                 location: payload.location,
                 teeTime: payload.teeTime,
+                timeZone: payload.timeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -148,6 +150,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Join the round at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
+                timeZone: payload.timeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -171,6 +174,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Review the updated round details at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
+                timeZone: payload.timeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -194,6 +198,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Join the round at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
+                timeZone: payload.timeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),

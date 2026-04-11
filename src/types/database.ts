@@ -11,6 +11,7 @@ export interface Database {
           max_players: number;
           owner_email: string | null;
           tee_time: string;
+          timezone: string;
           updated_at: string;
         };
         Insert: {
@@ -22,6 +23,7 @@ export interface Database {
           max_players: number;
           owner_email?: string | null;
           tee_time: string;
+          timezone?: string;
           updated_at?: string;
         };
         Update: {
@@ -33,6 +35,7 @@ export interface Database {
           max_players?: number;
           owner_email?: string | null;
           tee_time?: string;
+          timezone?: string;
           updated_at?: string;
         };
         Relationships: [];

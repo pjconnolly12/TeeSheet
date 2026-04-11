@@ -10,6 +10,7 @@ export interface NotifyRoundPayload {
   roundId: string;
   location: string;
   teeTime: string;
+  timeZone: string;
   holes: number;
   maxPlayers: number;
   players: PlayerInput[];

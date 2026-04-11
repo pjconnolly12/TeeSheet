@@ -5,6 +5,7 @@ create table if not exists public.rounds (
   created_by uuid not null references auth.users(id) on delete cascade,
   owner_email text,
   tee_time timestamptz not null,
+  timezone text not null default 'UTC',
   max_players integer not null check (max_players > 0 and max_players <= 4),
   location text not null,
   holes integer not null check (holes in (9, 18, 27, 36)),
@@ -14,6 +15,9 @@ create table if not exists public.rounds (
 
 alter table if exists public.rounds
   add column if not exists owner_email text;
+
+alter table if exists public.rounds
+  add column if not exists timezone text not null default 'UTC';
 
 create table if not exists public.round_players (
   id uuid primary key default gen_random_uuid(),
