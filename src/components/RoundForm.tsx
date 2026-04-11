@@ -73,6 +73,39 @@ export function RoundForm({
     );
   }, [distributionListOptions, golferPickerQuery]);
 
+  const inviteableRecipients = useMemo(() => {
+    const currentPlayerEmails = new Set(
+      players.map((player) => player.email.trim().toLowerCase()).filter(Boolean)
+    );
+    const openSpots = maxPlayers - currentPlayerEmails.size;
+    const existingInviteEmails = new Set(
+      (initialRound?.round_invitations ?? [])
+        .map((invite) => invite.email.trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    if (openSpots <= 0) {
+      return [];
+    }
+
+    return distributionList.filter((entry) => {
+      const email = entry.email.trim().toLowerCase();
+      if (!email) {
+        return false;
+      }
+
+      if (currentPlayerEmails.has(email)) {
+        return false;
+      }
+
+      if (initialRound && existingInviteEmails.has(email)) {
+        return false;
+      }
+
+      return true;
+    });
+  }, [distributionList, initialRound, maxPlayers, players]);
+
   useEffect(() => {
     if (!initialRound) {
       setRoundDate("");
@@ -189,7 +222,12 @@ export function RoundForm({
       holes,
       players: cleanedPlayers,
       inviteMode,
-      selectedInviteEmails: inviteMode === "selected" ? selectedInviteEmails : undefined
+      selectedInviteEmails:
+        !initialRound || inviteMode === "selected"
+          ? selectedInviteEmails
+          : selectedInviteEmails.length > 0
+            ? selectedInviteEmails
+            : undefined
     };
   }
 
@@ -201,13 +239,20 @@ export function RoundForm({
     );
   }
 
+  function openInviteModal() {
+    setError(null);
+    setIsInviteModalOpen(true);
+  }
+
   async function submitPayload(payload: SaveRoundPayload) {
     const saved = await onSave(payload);
-    if (saved && !initialRound) {
+    if (saved) {
       setPendingPayload(null);
       setIsInviteModalOpen(false);
       setSelectedInviteEmails([]);
-      setInviteMode("all");
+      if (!initialRound) {
+        setInviteMode("all");
+      }
     }
   }
 
@@ -400,13 +445,30 @@ export function RoundForm({
                 Add Golfer
               </button>
             </div>
+
+            {initialRound && selectedInviteEmails.length > 0 ? (
+              <p className="muted">
+                {selectedInviteEmails.length} invite{selectedInviteEmails.length === 1 ? "" : "s"} selected to send when you update this round.
+              </p>
+            ) : null}
           </div>
 
           {error ? <p className="error-message">{error}</p> : null}
 
-          <button className="primary-button" type="submit" disabled={saving}>
-            {saving ? "Saving..." : initialRound ? "Update Round" : "Create Round"}
-          </button>
+          {initialRound ? (
+            <div className="modal-actions">
+              <button className="ghost-button" type="button" onClick={openInviteModal} disabled={saving}>
+                Add Invites
+              </button>
+              <button className="primary-button" type="submit" disabled={saving}>
+                {saving ? "Saving..." : "Update Round"}
+              </button>
+            </div>
+          ) : (
+            <button className="primary-button" type="submit" disabled={saving}>
+              {saving ? "Saving..." : "Create Round"}
+            </button>
+          )}
         </form>
       </section>
 
@@ -482,27 +544,35 @@ export function RoundForm({
           >
             <div className="panel-heading">
               <div>
-                <p className="eyebrow">Select Invites</p>
-                <h2 id="invite-selection-title">Choose recipients for this round</h2>
+                <p className="eyebrow">{initialRound ? "Stage Invites" : "Select Invites"}</p>
+                <h2 id="invite-selection-title">
+                  {initialRound ? "Choose recipients to invite on update" : "Choose recipients for this round"}
+                </h2>
               </div>
               <button className="ghost-button" type="button" onClick={() => setIsInviteModalOpen(false)}>
-                Cancel
+                Close
               </button>
             </div>
 
             <div className="stack-sm">
               <p className="muted">
-                Pick which saved distribution-list recipients should receive an invitation when this round is created.
+                {initialRound
+                  ? "Pick which saved distribution-list recipients should receive an invitation when you update this round."
+                  : "Pick which saved distribution-list recipients should receive an invitation when this round is created."}
               </p>
 
-              {distributionList.length === 0 ? (
+              {inviteableRecipients.length === 0 ? (
                 <div className="empty-state">
-                  <p>No saved recipients yet.</p>
-                  <span>You can still create the round without sending distribution-list invitations.</span>
+                  <p>{distributionList.length === 0 ? "No saved recipients yet." : "No eligible invite recipients."}</p>
+                  <span>
+                    {distributionList.length === 0
+                      ? "You can still save the round without sending distribution-list invitations."
+                      : "Everyone on your saved list is already playing or has already been invited."}
+                  </span>
                 </div>
               ) : (
                 <ul className="player-pill-list">
-                  {distributionList.map((entry) => {
+                  {inviteableRecipients.map((entry) => {
                     const normalizedEmail = entry.email.trim().toLowerCase();
                     const isChecked = selectedInviteEmails.includes(normalizedEmail);
 
@@ -526,12 +596,30 @@ export function RoundForm({
               )}
 
               <div className="modal-actions">
-                <button className="ghost-button" type="button" onClick={() => setIsInviteModalOpen(false)}>
-                  Back
-                </button>
-                <button className="primary-button" type="button" onClick={() => void handleConfirmInvites()} disabled={saving}>
-                  {saving ? "Saving..." : "Confirm invites"}
-                </button>
+                {initialRound ? (
+                  <>
+                    <button
+                      className="ghost-button"
+                      type="button"
+                      onClick={() => setSelectedInviteEmails([])}
+                      disabled={saving || selectedInviteEmails.length === 0}
+                    >
+                      Clear
+                    </button>
+                    <button className="primary-button" type="button" onClick={() => setIsInviteModalOpen(false)} disabled={saving}>
+                      Done
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button className="ghost-button" type="button" onClick={() => setIsInviteModalOpen(false)}>
+                      Back
+                    </button>
+                    <button className="primary-button" type="button" onClick={() => void handleConfirmInvites()} disabled={saving}>
+                      {saving ? "Saving..." : "Confirm invites"}
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </section>

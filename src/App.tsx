@@ -288,20 +288,35 @@ export default function App() {
         throw playersError;
       }
 
-      if (!editingRound && openSpots > 0) {
-        const playerEmails = new Set(finalPlayers.map((player) => player.email));
-        const selectedInviteEmails =
-          payload.inviteMode === "selected"
-            ? new Set(
-                (payload.selectedInviteEmails ?? [])
-                  .map((email) => email.trim().toLowerCase())
-                  .filter(Boolean)
-              )
-            : null;
-        invitationEntries = distributionList.filter((entry) => {
-          const email = entry.email.trim().toLowerCase();
-          return email && !playerEmails.has(email) && (selectedInviteEmails ? selectedInviteEmails.has(email) : true);
-        });
+      const playerEmails = new Set(finalPlayers.map((player) => player.email));
+      const stagedInviteEmails = new Set(
+        (payload.selectedInviteEmails ?? [])
+          .map((email) => email.trim().toLowerCase())
+          .filter(Boolean)
+      );
+
+      if (openSpots > 0) {
+        if (!editingRound) {
+          const selectedInviteEmails = payload.inviteMode === "selected" ? stagedInviteEmails : null;
+          invitationEntries = distributionList.filter((entry) => {
+            const email = entry.email.trim().toLowerCase();
+            return email && !playerEmails.has(email) && (selectedInviteEmails ? selectedInviteEmails.has(email) : true);
+          });
+        } else if (stagedInviteEmails.size > 0) {
+          const existingInvitationEmails = new Set(
+            editingRound.round_invitations.map((invite) => invite.email.trim().toLowerCase()).filter(Boolean)
+          );
+          invitationEntries = distributionList.filter((entry) => {
+            const email = entry.email.trim().toLowerCase();
+            return (
+              email &&
+              stagedInviteEmails.has(email) &&
+              !playerEmails.has(email) &&
+              !existingInvitationEmails.has(email)
+            );
+          });
+        }
+
         const invitationEmails = Array.from(
           new Set(
             invitationEntries
@@ -370,7 +385,7 @@ export default function App() {
         maxPlayers: payload.maxPlayers,
         players: finalPlayers,
         addedPlayers: editingRound ? undefined : addedPlayerRecipients,
-        invitedRecipients: editingRound ? undefined : invitedRecipients,
+        invitedRecipients: invitedRecipients,
         updatedRecipients: editingRound ? addedPlayerRecipients : undefined
       });
 

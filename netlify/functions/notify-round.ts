@@ -158,27 +158,52 @@ export const handler: Handler = async (event) => {
           )
         );
       }
-    } else if (normalizedUpdatedRecipients.length > 0) {
-      failures.push(
-        ...(
-          await sendRoundEmails({
-            recipients: normalizedUpdatedRecipients,
-            subject: `Updated golf round: ${payload.location}`,
-            html: buildRoundEmail({
-              heading: "A golf round was updated",
-              intro: "Your round details were updated.",
-              actionText: "Review the updated round details at TeeLogic using the link below.",
-              location: payload.location,
-              teeTime: payload.teeTime,
-              holes: payload.holes,
-              maxPlayers: payload.maxPlayers
-            }),
-            roundId: payload.roundId,
-            category: "round_notification",
-            kind: payload.kind
-          })
-        )
-      );
+    } else {
+      if (normalizedUpdatedRecipients.length > 0) {
+        failures.push(
+          ...(
+            await sendRoundEmails({
+              recipients: normalizedUpdatedRecipients,
+              subject: `Updated golf round: ${payload.location}`,
+              html: buildRoundEmail({
+                heading: "A golf round was updated",
+                intro: "Your round details were updated.",
+                actionText: "Review the updated round details at TeeLogic using the link below.",
+                location: payload.location,
+                teeTime: payload.teeTime,
+                holes: payload.holes,
+                maxPlayers: payload.maxPlayers
+              }),
+              roundId: payload.roundId,
+              category: "round_notification",
+              kind: payload.kind
+            })
+          )
+        );
+      }
+
+      if (normalizedInvitedRecipients.length > 0) {
+        failures.push(
+          ...(
+            await sendRoundEmails({
+              recipients: normalizedInvitedRecipients,
+              subject: `New golf round: ${payload.location}`,
+              html: buildRoundEmail({
+                heading: "A golf round was created",
+                intro: "A spot is available and you can join this round in TeeLogic.",
+                actionText: "Join the round at TeeLogic using the link below.",
+                location: payload.location,
+                teeTime: payload.teeTime,
+                holes: payload.holes,
+                maxPlayers: payload.maxPlayers
+              }),
+              roundId: payload.roundId,
+              category: "round_invitation",
+              kind: payload.kind
+            })
+          )
+        );
+      }
     }
 
     if (
@@ -192,7 +217,11 @@ export const handler: Handler = async (event) => {
       };
     }
 
-    if (payload.kind === "updated" && normalizedUpdatedRecipients.length === 0) {
+    if (
+      payload.kind === "updated" &&
+      normalizedUpdatedRecipients.length === 0 &&
+      normalizedInvitedRecipients.length === 0
+    ) {
       return {
         statusCode: 200,
         body: "No notifications to send."
