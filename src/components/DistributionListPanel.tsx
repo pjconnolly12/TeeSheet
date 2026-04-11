@@ -158,18 +158,22 @@ export function DistributionListPanel({
                   </div>
                   <div className="list-entry-actions">
                     <button
-                      className="ghost-button"
+                      className="ghost-button distribution-action-button"
                       type="button"
                       onClick={() => startEdit(index)}
+                      aria-label={`Edit ${entry.name || entry.email}`}
                     >
-                      Edit
+                      <span className="action-label">Edit</span>
+                      <span className="action-symbol" aria-hidden="true">✎</span>
                     </button>
                     <button
-                      className="icon-button"
+                      className="icon-button distribution-action-button"
                       type="button"
                       onClick={() => removeEntry(index)}
+                      aria-label={`Remove ${entry.name || entry.email}`}
                     >
-                      Remove
+                      <span className="action-label">Remove</span>
+                      <span className="action-symbol" aria-hidden="true">×</span>
                     </button>
                   </div>
                 </li>

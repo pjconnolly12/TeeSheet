@@ -317,6 +317,10 @@ select {
   flex-wrap: wrap;
 }
 
+.action-symbol {
+  display: none;
+}
+
 .player-entry-owner {
   display: flex;
   align-items: center;
@@ -515,13 +519,41 @@ select {
   }
 
   .list-entry {
-    align-items: start;
-    gap: 14px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+  }
+
+  .list-entry > div:first-child {
+    flex: 1;
+    min-width: 0;
   }
 
   .list-entry-actions {
-    width: 100%;
-    justify-content: flex-start;
+    width: auto;
+    flex-shrink: 0;
+    justify-content: flex-end;
+    flex-wrap: nowrap;
+    align-self: flex-start;
+  }
+
+  .distribution-action-button {
+    min-width: 36px;
+    min-height: 36px;
+    padding: 0;
+    display: grid;
+    place-items: center;
+  }
+
+  .action-label {
+    display: none;
+  }
+
+  .action-symbol {
+    display: inline;
+    font-size: 1.1rem;
+    line-height: 1;
   }
 
   .desktop-only {
