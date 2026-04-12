@@ -25,15 +25,30 @@ type RoundSummary = {
   max_players: number;
 };
 
-function formatInTimeZone(value: string, timeZone: string, options: Intl.DateTimeFormatOptions) {
-  try {
-    return new Intl.DateTimeFormat("en-US", {
-      timeZone,
-      ...options
-    }).format(new Date(value));
-  } catch {
-    return new Intl.DateTimeFormat("en-US", options).format(new Date(value));
+export function resolveRoundTimeZone(timeZone?: string | null) {
+  const normalizedTimeZone = timeZone?.trim();
+
+  if (!normalizedTimeZone) {
+    console.warn("round email timezone missing; falling back to UTC");
+    return "UTC";
   }
+
+  try {
+    new Intl.DateTimeFormat("en-US", { timeZone: normalizedTimeZone }).format(new Date());
+    return normalizedTimeZone;
+  } catch {
+    console.warn("round email timezone invalid; falling back to UTC", {
+      suppliedTimeZone: normalizedTimeZone
+    });
+    return "UTC";
+  }
+}
+
+function formatInTimeZone(value: string, timeZone: string, options: Intl.DateTimeFormatOptions) {
+  return new Intl.DateTimeFormat("en-US", {
+    timeZone,
+    ...options
+  }).format(new Date(value));
 }
 
 export function buildRoundEmail({
@@ -55,13 +70,19 @@ export function buildRoundEmail({
   holes: number;
   maxPlayers: number;
 }) {
-  const formattedDate = formatInTimeZone(teeTime, timeZone, {
+  const resolvedTimeZone = resolveRoundTimeZone(timeZone);
+  console.log("buildRoundEmail formatting tee time", {
+    teeTime,
+    suppliedTimeZone: timeZone,
+    resolvedTimeZone
+  });
+  const formattedDate = formatInTimeZone(teeTime, resolvedTimeZone, {
     weekday: "long",
     month: "long",
     day: "numeric",
     year: "numeric"
   });
-  const formattedTime = formatInTimeZone(teeTime, timeZone, {
+  const formattedTime = formatInTimeZone(teeTime, resolvedTimeZone, {
     hour: "numeric",
     minute: "2-digit",
     hour12: true

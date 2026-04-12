@@ -1,5 +1,5 @@
 import type { Handler } from "@netlify/functions";
-import { buildRoundEmail, resend, sender } from "./_shared";
+import { buildRoundEmail, resend, resolveRoundTimeZone, sender, supabaseAdmin } from "./_shared";
 
 type NotifyRecipient = {
   email: string;
@@ -96,20 +96,67 @@ export const handler: Handler = async (event) => {
       roundId: string;
       location: string;
       teeTime: string;
-      timeZone: string;
+      timeZone?: string;
       holes: number;
       maxPlayers: number;
       players: Array<{ email: string; name: string }>;
+      recipients?: NotifyRecipient[];
       addedPlayers?: NotifyRecipient[];
       invitedRecipients?: NotifyRecipient[];
       updatedRecipients?: NotifyRecipient[];
     };
+    let resolvedTimeZone = payload.timeZone?.trim() || "";
+
+    if (!resolvedTimeZone && payload.roundId) {
+      const { data: roundData, error: roundError } = await supabaseAdmin
+        .from("rounds")
+        .select("timezone")
+        .eq("id", payload.roundId)
+        .single();
+
+      if (roundError) {
+        console.warn("notify-round could not load round timezone", {
+          roundId: payload.roundId,
+          error: roundError.message
+        });
+      } else {
+        resolvedTimeZone = roundData?.timezone?.trim() ?? "";
+      }
+    }
+
+    resolvedTimeZone = resolveRoundTimeZone(resolvedTimeZone);
+
+    const legacyRecipients = normalizeRecipients(payload.recipients);
+    const hasGroupedRecipients =
+      Boolean(payload.addedPlayers?.length) ||
+      Boolean(payload.invitedRecipients?.length) ||
+      Boolean(payload.updatedRecipients?.length);
+
+    console.log("notify-round payload received", {
+      roundId: payload.roundId,
+      kind: payload.kind,
+      payloadShape: hasGroupedRecipients ? "grouped" : legacyRecipients.length > 0 ? "legacy" : "empty",
+      legacyRecipientCount: legacyRecipients.length,
+      addedPlayerCount: payload.addedPlayers?.length ?? 0,
+      invitedRecipientCount: payload.invitedRecipients?.length ?? 0,
+      updatedRecipientCount: payload.updatedRecipients?.length ?? 0,
+      resolvedTimeZone
+    });
+
     const normalizedAddedPlayers = normalizeRecipients(payload.addedPlayers);
     const addedPlayerEmails = new Set(normalizedAddedPlayers.map((recipient) => recipient.email));
-    const normalizedInvitedRecipients = normalizeRecipients(payload.invitedRecipients).filter(
+    let normalizedInvitedRecipients = normalizeRecipients(payload.invitedRecipients).filter(
       (recipient) => !addedPlayerEmails.has(recipient.email)
     );
-    const normalizedUpdatedRecipients = normalizeRecipients(payload.updatedRecipients);
+    let normalizedUpdatedRecipients = normalizeRecipients(payload.updatedRecipients);
+
+    if (!hasGroupedRecipients && legacyRecipients.length > 0) {
+      if (payload.kind === "created") {
+        normalizedInvitedRecipients = legacyRecipients;
+      } else {
+        normalizedUpdatedRecipients = legacyRecipients;
+      }
+    }
 
     const failures: string[] = [];
 
@@ -126,7 +173,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Open TeeLogic to review the round and get ready for tee time.",
                 location: payload.location,
                 teeTime: payload.teeTime,
-                timeZone: payload.timeZone,
+                timeZone: resolvedTimeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -150,7 +197,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Join the round at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
-                timeZone: payload.timeZone,
+                timeZone: resolvedTimeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -174,7 +221,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Review the updated round details at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
-                timeZone: payload.timeZone,
+                timeZone: resolvedTimeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
@@ -198,7 +245,7 @@ export const handler: Handler = async (event) => {
                 actionText: "Join the round at TeeLogic using the link below.",
                 location: payload.location,
                 teeTime: payload.teeTime,
-                timeZone: payload.timeZone,
+                timeZone: resolvedTimeZone,
                 holes: payload.holes,
                 maxPlayers: payload.maxPlayers
               }),
