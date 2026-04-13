@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import type { Session } from "@supabase/supabase-js";
 import { AuthCard } from "./components/AuthCard";
 import { DistributionListPanel } from "./components/DistributionListPanel";
+import { FaqModal } from "./components/FaqModal";
 import { RoundForm } from "./components/RoundForm";
 import { RoundList } from "./components/RoundList";
 import { supabase } from "./lib/supabase";
@@ -24,6 +25,7 @@ export default function App() {
   const [editingRound, setEditingRound] = useState<RoundWithPlayers | null>(null);
   const [distributionList, setDistributionList] = useState<DistributionListEntryRow[]>([]);
   const [isDistributionListOpen, setIsDistributionListOpen] = useState(false);
+  const [isFaqOpen, setIsFaqOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileRoundFormOpen, setIsMobileRoundFormOpen] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -663,6 +665,11 @@ export default function App() {
     setIsMobileMenuOpen(false);
   }
 
+  function handleOpenFaq() {
+    setIsFaqOpen(true);
+    setIsMobileMenuOpen(false);
+  }
+
   function handleOpenRoundForm() {
     setEditingRound(null);
     setIsMobileRoundFormOpen(true);
@@ -729,6 +736,9 @@ export default function App() {
           <button className="ghost-button" type="button" onClick={handleOpenRoundForm}>
             Create round
           </button>
+          <button className="ghost-button" type="button" onClick={handleOpenFaq}>
+            FAQ
+          </button>
           <button className="ghost-button" type="button" onClick={handleOpenDistributionList}>
             Manage distribution list
           </button>
@@ -746,13 +756,18 @@ export default function App() {
       ) : null}
 
       <div className="toolbar-row desktop-only">
-        <button
-          className="ghost-button"
-          type="button"
-          onClick={handleOpenDistributionList}
-        >
-          Manage distribution list
-        </button>
+        <div className="toolbar-actions">
+          <button className="ghost-button" type="button" onClick={handleOpenFaq}>
+            FAQ
+          </button>
+          <button
+            className="ghost-button"
+            type="button"
+            onClick={handleOpenDistributionList}
+          >
+            Manage distribution list
+          </button>
+        </div>
         <span className="muted">
           {distributionList.length === 0
             ? "No saved recipients"
@@ -812,6 +827,7 @@ export default function App() {
         saving={savingDistributionList}
         onSave={handleSaveDistributionList}
       />
+      <FaqModal isOpen={isFaqOpen} onClose={() => setIsFaqOpen(false)} />
     </main>
   );
 }

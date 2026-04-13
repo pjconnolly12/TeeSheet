@@ -79,6 +79,12 @@ button {
   margin: 0 0 24px;
 }
 
+.toolbar-actions {
+  display: flex;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
 .content-grid {
   display: grid;
   gap: 24px;
@@ -380,6 +386,34 @@ select {
 
 .invite-selection-item {
   align-items: stretch;
+}
+
+.faq-modal {
+  max-width: 720px;
+}
+
+.faq-item {
+  border: 1px solid rgba(69, 97, 82, 0.14);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.72);
+  padding: 4px 18px 18px;
+}
+
+.faq-question {
+  cursor: pointer;
+  color: #183122;
+  font-weight: 700;
+  list-style: none;
+  padding: 14px 0 0;
+}
+
+.faq-question::-webkit-details-marker {
+  display: none;
+}
+
+.faq-answer {
+  color: #496454;
+  margin: 14px 0 0;
 }
 
 .player-pill-list small,
