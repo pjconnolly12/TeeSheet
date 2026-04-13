@@ -1,5 +1,5 @@
 import type { Handler } from "@netlify/functions";
-import { buildRoundEmail, resend, resolveRoundTimeZone, sender, supabaseAdmin } from "./_shared";
+import { buildRoundEmail, resolveRoundTimeZone, sendBatchEmailJobs, supabaseAdmin } from "./_shared";
 
 type NotifyRecipient = {
   email: string;
@@ -44,42 +44,18 @@ async function sendRoundEmails({
   category: string;
   kind: "created" | "updated";
 }) {
-  const failures: string[] = [];
+  const jobs = recipients.map((recipient) => ({
+    to: recipient.email,
+    subject,
+    html,
+    tags: [
+      { name: "category", value: category },
+      { name: "kind", value: kind },
+      { name: "round_id", value: roundId.replace(/[^a-zA-Z0-9_-]/g, "-") }
+    ]
+  }));
 
-  for (const recipient of recipients) {
-    const result = await resend.emails.send({
-      from: sender,
-      to: recipient.email,
-      subject,
-      html,
-      tags: [
-        { name: "category", value: category },
-        { name: "kind", value: kind },
-        { name: "round_id", value: roundId.replace(/[^a-zA-Z0-9_-]/g, "-") }
-      ]
-    });
-
-    if (result.error) {
-      failures.push(`${recipient.email}: ${result.error.message}`);
-      console.error("notify-round send failed", {
-        roundId,
-        recipient: recipient.email,
-        category,
-        kind,
-        error: result.error
-      });
-    } else {
-      console.log("notify-round send accepted", {
-        roundId,
-        recipient: recipient.email,
-        category,
-        kind,
-        resendEmailId: result.data?.id ?? null
-      });
-    }
-  }
-
-  return failures;
+  return (await sendBatchEmailJobs({ jobs, category, chunkSize: 5, delayMs: 1000 })).failures;
 }
 
 export const handler: Handler = async (event) => {

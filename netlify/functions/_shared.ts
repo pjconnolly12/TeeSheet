@@ -16,6 +16,18 @@ export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceRoleKey);
 export const sender = emailFrom;
 export const siteUrl = appUrl;
 
+type BatchEmailTag = {
+  name: string;
+  value: string;
+};
+
+export type BatchEmailJob = {
+  to: string;
+  subject: string;
+  html: string;
+  tags?: BatchEmailTag[];
+};
+
 type RoundSummary = {
   id: string;
   location: string;
@@ -49,6 +61,88 @@ function formatInTimeZone(value: string, timeZone: string, options: Intl.DateTim
     timeZone,
     ...options
   }).format(new Date(value));
+}
+
+function chunkArray<T>(items: T[], size: number) {
+  const chunks: T[][] = [];
+
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+
+  return chunks;
+}
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function sendBatchEmailJobs({
+  jobs,
+  category,
+  chunkSize = 5,
+  delayMs = 1000
+}: {
+  jobs: BatchEmailJob[];
+  category: string;
+  chunkSize?: number;
+  delayMs?: number;
+}) {
+  const failures: string[] = [];
+
+  if (!jobs.length) {
+    return { failures };
+  }
+
+  const chunks = chunkArray(jobs, chunkSize);
+  console.log("sendBatchEmailJobs starting", {
+    category,
+    totalJobs: jobs.length,
+    chunkSize,
+    chunkCount: chunks.length,
+    delayMs
+  });
+
+  for (const [index, chunk] of chunks.entries()) {
+    console.log("sendBatchEmailJobs sending chunk", {
+      category,
+      chunkNumber: index + 1,
+      chunkCount: chunks.length,
+      recipients: chunk.map((job) => job.to)
+    });
+
+    const result = await resend.batch.send(
+      chunk.map((job) => ({
+        from: sender,
+        to: job.to,
+        subject: job.subject,
+        html: job.html,
+        tags: job.tags
+      }))
+    );
+
+    if (result.error) {
+      const chunkRecipients = chunk.map((job) => job.to).join(", ");
+      failures.push(`${chunkRecipients}: ${result.error.message}`);
+      console.error("sendBatchEmailJobs chunk failed", {
+        category,
+        chunkNumber: index + 1,
+        error: result.error
+      });
+    } else {
+      console.log("sendBatchEmailJobs chunk accepted", {
+        category,
+        chunkNumber: index + 1,
+        acceptedCount: chunk.length
+      });
+    }
+
+    if (index < chunks.length - 1) {
+      await delay(delayMs);
+    }
+  }
+
+  return { failures };
 }
 
 export function buildRoundEmail({
