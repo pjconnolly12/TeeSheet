@@ -35,7 +35,17 @@ type RoundSummary = {
   timezone: string;
   holes: number;
   max_players: number;
+  owner_email: string | null;
 };
+
+export type OwnerRosterChangeSource =
+  | "self_join"
+  | "self_leave"
+  | "owner_edit_add"
+  | "owner_edit_remove"
+  | "waitlist_promotion";
+
+export type OwnerRosterChangeType = "joined" | "left";
 
 export function resolveRoundTimeZone(timeZone?: string | null) {
   const normalizedTimeZone = timeZone?.trim();
@@ -208,6 +218,151 @@ export function buildRoundEmail({
       </div>
     </div>
   `;
+}
+
+function humanizeRosterChangeSource(source: OwnerRosterChangeSource) {
+  switch (source) {
+    case "self_join":
+      return "Joined from the round page";
+    case "self_leave":
+      return "Left from the round page";
+    case "owner_edit_add":
+      return "Added during a round edit";
+    case "owner_edit_remove":
+      return "Removed during a round edit";
+    case "waitlist_promotion":
+      return "Auto-promoted from the waitlist";
+    default:
+      return "Roster changed";
+  }
+}
+
+export function buildOwnerRosterChangeEmail({
+  changeType,
+  playerEmail,
+  source,
+  location,
+  teeTime,
+  timeZone,
+  holes,
+  maxPlayers
+}: {
+  changeType: OwnerRosterChangeType;
+  playerEmail: string;
+  source: OwnerRosterChangeSource;
+  location: string;
+  teeTime: string;
+  timeZone: string;
+  holes: number;
+  maxPlayers: number;
+}) {
+  const resolvedTimeZone = resolveRoundTimeZone(timeZone);
+  const formattedDate = formatInTimeZone(teeTime, resolvedTimeZone, {
+    weekday: "long",
+    month: "long",
+    day: "numeric",
+    year: "numeric"
+  });
+  const formattedTime = formatInTimeZone(teeTime, resolvedTimeZone, {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true
+  });
+  const actionText = changeType === "joined" ? "joined" : "left";
+  const sourceLabel = humanizeRosterChangeSource(source);
+
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:580px;margin:0 auto;padding:24px;background:#f6f8f3;">
+      <div style="background:#ffffff;border-radius:18px;padding:24px;border:1px solid #dde5da;">
+        <p style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:#1f7a4f;margin:0 0 12px;">TeeLogic</p>
+        <h1 style="margin:0 0 12px;color:#183122;">A player ${actionText} your round</h1>
+        <p style="margin:0 0 20px;color:#496454;">${playerEmail} ${actionText} the roster. Here are the latest round details.</p>
+        <div style="background:#eef6e4;border-radius:16px;padding:16px;">
+          <p style="margin:0 0 8px;"><strong>Player:</strong> ${playerEmail}</p>
+          <p style="margin:0 0 8px;"><strong>Change source:</strong> ${sourceLabel}</p>
+          <p style="margin:0 0 8px;"><strong>Location:</strong> ${location}</p>
+          <p style="margin:0 0 8px;"><strong>Date:</strong> ${formattedDate}</p>
+          <p style="margin:0 0 8px;"><strong>Time:</strong> ${formattedTime}</p>
+          <p style="margin:0 0 8px;"><strong>Holes:</strong> ${holes}</p>
+          <p style="margin:0;"><strong>Group size:</strong> ${maxPlayers}</p>
+        </div>
+        <p style="margin:20px 0 0;color:#496454;">
+          Open TeeLogic to review the current roster and round details.
+        </p>
+        <p style="margin:16px 0 0;">
+          <a href="${siteUrl}" style="display:inline-block;background:#1f7a4f;color:#ffffff;font-weight:700;text-decoration:none;padding:12px 18px;border-radius:999px;">Open TeeLogic</a>
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+export async function sendOwnerRosterChangeNotification({
+  roundId,
+  changeType,
+  playerEmail,
+  source
+}: {
+  roundId: string;
+  changeType: OwnerRosterChangeType;
+  playerEmail: string;
+  source: OwnerRosterChangeSource;
+}) {
+  const normalizedPlayerEmail = playerEmail.trim().toLowerCase();
+
+  if (!normalizedPlayerEmail) {
+    return { sent: 0, skipped: "missing_player_email" as const };
+  }
+
+  const { data: roundData, error: roundError } = await supabaseAdmin
+    .from("rounds")
+    .select("id, owner_email, location, tee_time, timezone, holes, max_players")
+    .eq("id", roundId)
+    .single();
+
+  if (roundError) {
+    throw new Error(`Could not load round details: ${roundError.message}`);
+  }
+
+  const round = roundData as RoundSummary;
+  const ownerEmail = round.owner_email?.trim().toLowerCase();
+
+  if (!ownerEmail) {
+    return { sent: 0, skipped: "missing_owner_email" as const };
+  }
+
+  if (ownerEmail === normalizedPlayerEmail) {
+    return { sent: 0, skipped: "owner_is_affected_player" as const };
+  }
+
+  const actionText = changeType === "joined" ? "joined" : "left";
+  const result = await resend.emails.send({
+    from: sender,
+    to: ownerEmail,
+    subject: `Player ${actionText} your round: ${round.location}`,
+    html: buildOwnerRosterChangeEmail({
+      changeType,
+      playerEmail: normalizedPlayerEmail,
+      source,
+      location: round.location,
+      teeTime: round.tee_time,
+      timeZone: round.timezone,
+      holes: round.holes,
+      maxPlayers: round.max_players
+    }),
+    tags: [
+      { name: "category", value: "owner_roster_change" },
+      { name: "change_type", value: changeType },
+      { name: "source", value: source },
+      { name: "round_id", value: round.id.replace(/[^a-zA-Z0-9_-]/g, "-") }
+    ]
+  });
+
+  if (result.error) {
+    throw new Error(result.error.message);
+  }
+
+  return { sent: 1 };
 }
 
 export async function sendWaitlistPromotionNotifications({

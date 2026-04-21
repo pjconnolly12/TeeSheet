@@ -15,6 +15,7 @@ TeeLogic is a lightweight golf round scheduler built with React, TypeScript, Sup
 - Automatically promote the earliest waitlisted golfer when a spot opens
 - Email golfers when they are automatically promoted from the waitlist
 - Send automatic round emails on create and update
+- Email round owners when golfers join or leave their rounds
 - Send reminder emails before upcoming rounds
 - Automatically remove rounds after their tee time has passed
 
@@ -122,6 +123,7 @@ In Supabase Auth settings:
 1. Trigger a production deploy from the `main` branch.
 2. Confirm these Netlify Functions are present:
    - `notify-round`
+   - `notify-round-owner-roster-change`
    - `send-round-reminders`
    - `delete-past-rounds`
 3. Confirm the scheduled reminder job is active. The current schedule is:
@@ -141,7 +143,8 @@ Run through this checklist on the deployed site:
 6. Confirm only the owner can edit or delete the round.
 7. Fill a round, join the waitlist, and verify waitlist promotion when a spot opens.
 8. Confirm creation and update emails send successfully.
-9. Trigger or wait for `send-round-reminders` and confirm reminders mark `reminder_sent_at`.
+9. Join or leave a round and confirm the round owner receives the roster change email.
+10. Trigger or wait for `send-round-reminders` and confirm reminders mark `reminder_sent_at`.
 
 ## Reminder emails
 
@@ -163,6 +166,7 @@ The app only loads rounds whose `tee_time` is still in the future.
 
 Each round is owned by the authenticated user who created it through the `rounds.created_by` field.
 Owners can manage a reusable distribution list in the app, and those recipients are emailed whenever that owner creates a new round.
+Owners also receive an email whenever another golfer joins or leaves their round, including waitlist promotions and owner-driven roster edits.
 
 ## Waitlist behavior
 

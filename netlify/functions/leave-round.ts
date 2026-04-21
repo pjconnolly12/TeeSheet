@@ -1,5 +1,9 @@
 import type { Handler } from "@netlify/functions";
-import { sendWaitlistPromotionNotifications, supabaseAdmin } from "./_shared";
+import {
+  sendOwnerRosterChangeNotification,
+  sendWaitlistPromotionNotifications,
+  supabaseAdmin
+} from "./_shared";
 
 type RoundRecord = {
   id: string;
@@ -80,6 +84,21 @@ export const handler: Handler = async (event) => {
       throw deleteError;
     }
 
+    try {
+      await sendOwnerRosterChangeNotification({
+        roundId,
+        changeType: "left",
+        playerEmail: email,
+        source: "self_leave"
+      });
+    } catch (notificationError) {
+      console.error("leave-round owner notification failed", {
+        roundId,
+        playerEmail: email,
+        message: notificationError instanceof Error ? notificationError.message : "Unexpected error."
+      });
+    }
+
     const remainingPlayerCount = round.round_players.length - 1;
     const openSpots = round.max_players - remainingPlayerCount;
     let promotedEmail: string | null = null;
@@ -124,6 +143,21 @@ export const handler: Handler = async (event) => {
           roundId,
           recipientEmails: [nextEntry.email]
         });
+
+        try {
+          await sendOwnerRosterChangeNotification({
+            roundId,
+            changeType: "joined",
+            playerEmail: nextEntry.email,
+            source: "waitlist_promotion"
+          });
+        } catch (notificationError) {
+          console.error("leave-round waitlist owner notification failed", {
+            roundId,
+            playerEmail: nextEntry.email,
+            message: notificationError instanceof Error ? notificationError.message : "Unexpected error."
+          });
+        }
       }
     }
 

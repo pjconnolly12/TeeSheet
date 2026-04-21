@@ -13,7 +13,7 @@ import type {
   PlayerInput,
   RoundWithPlayers
 } from "./types/app";
-import { notifyRound } from "./utils/email";
+import { notifyRound, notifyRoundOwnerRosterChange } from "./utils/email";
 
 const LEAVE_ROUND_BLOCKED_MESSAGE =
   "You cannot leave the round within 24 hours of tee time, please contact the owner of the round directly to manage your round, thanks.";
@@ -33,6 +33,18 @@ export default function App() {
   const [savingDistributionList, setSavingDistributionList] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [leaveRoundErrors, setLeaveRoundErrors] = useState<Record<string, string>>({});
+
+  async function sendOwnerRosterChangeNotification(
+    payload: Parameters<typeof notifyRoundOwnerRosterChange>[0],
+    fallbackMessage: string
+  ) {
+    try {
+      await notifyRoundOwnerRosterChange(payload);
+    } catch (caughtError) {
+      const message = caughtError instanceof Error ? caughtError.message : fallbackMessage;
+      setError(message || fallbackMessage);
+    }
+  }
 
   function buildCreatorPlayer(): PlayerInput | null {
     if (!session?.user.email) {
@@ -210,6 +222,10 @@ export default function App() {
       const normalizedPlayers = payload.players.map((player) => ({
         email: player.email.trim().toLowerCase()
       }));
+      const previousPlayerEmails = new Set(
+        editingRound?.round_players.map((player) => player.email.trim().toLowerCase()).filter(Boolean) ?? []
+      );
+      const roundOwnerEmail = editingRound?.owner_email?.trim().toLowerCase() ?? null;
 
       const finalPlayers =
         !editingRound && creatorPlayer
@@ -394,6 +410,41 @@ export default function App() {
         updatedRecipients: editingRound ? addedPlayerRecipients : undefined
       });
 
+      if (editingRound) {
+        const nextPlayerEmails = new Set(finalPlayers.map((player) => player.email));
+        const addedRosterEmails = Array.from(nextPlayerEmails).filter(
+          (email) => !previousPlayerEmails.has(email) && email !== roundOwnerEmail
+        );
+        const removedRosterEmails = Array.from(previousPlayerEmails).filter(
+          (email) => !nextPlayerEmails.has(email) && email !== roundOwnerEmail
+        );
+
+        await Promise.all([
+          ...addedRosterEmails.map((playerEmail) =>
+            sendOwnerRosterChangeNotification(
+              {
+                roundId,
+                changeType: "joined",
+                playerEmail,
+                source: "owner_edit_add"
+              },
+              "Roster updated, but the owner join notification could not be sent."
+            )
+          ),
+          ...removedRosterEmails.map((playerEmail) =>
+            sendOwnerRosterChangeNotification(
+              {
+                roundId,
+                changeType: "left",
+                playerEmail,
+                source: "owner_edit_remove"
+              },
+              "Roster updated, but the owner leave notification could not be sent."
+            )
+          )
+        ]);
+      }
+
       await loadRounds();
       setEditingRound(null);
       setIsMobileRoundFormOpen(false);
@@ -469,6 +520,20 @@ export default function App() {
     } catch {
       setError("Promoted players, but could not send notification email.");
     }
+
+    await Promise.all(
+      waitlistEntries.map((entry) =>
+        sendOwnerRosterChangeNotification(
+          {
+            roundId,
+            changeType: "joined",
+            playerEmail: entry.email,
+            source: "waitlist_promotion"
+          },
+          "Promoted players, but the owner notification could not be sent."
+        )
+      )
+    );
   }
 
   async function handleJoinWaitlist(roundId: string) {
@@ -551,6 +616,16 @@ export default function App() {
         setError(joinError.message);
         return;
       }
+
+      await sendOwnerRosterChangeNotification(
+        {
+          roundId,
+          changeType: "joined",
+          playerEmail: email,
+          source: "self_join"
+        },
+        "Joined the round, but the owner notification could not be sent."
+      );
 
       await loadRounds();
     } finally {
